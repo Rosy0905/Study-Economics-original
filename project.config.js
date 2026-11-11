@@ -131,7 +131,7 @@ window.PROJECT_CONFIG = {
     },
     palette: "default",
     clear: { picker: 'petal', label: '清除' },
-    sync: { label: '同步', fileName: '知识库备份', texts: {} },
+    sync: { label: '同步', fileName: '南开经济学知识库-备份', texts: {} },
     readme: { docs: [{ name: 'help', path: '_docs/help.md' }, { name: 'log', path: '_docs/log.md' }] }
   }
 };
