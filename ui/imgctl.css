@@ -1,0 +1,153 @@
+/* 图片尺寸条：普通子页笔记与我的卡片答案共用这一份结构样式。
+   组件由 engine/imgctl/core.js 生成 DOM，两边只覆盖 --imgctl-* 变量换皮肤；
+   色值一律引 ui/tokens.css，不在组件里写死。加载顺序：tokens.css 之后、页面样式之后。 */
+
+.imgctl {
+    /* 默认皮肤（普通子页笔记） */
+    --imgctl-gap: 9px;
+    --imgctl-pad: 5px 13px;
+    --imgctl-font: 12.5px;
+    --imgctl-val-min: 52px;
+    --imgctl-px-font: 11.5px;
+    --imgctl-btn-pad: 2px 12px;
+    --imgctl-btn-font: 12px;
+    --imgctl-apply-pad: 2px 14px;
+    --imgctl-bg: var(--rte-ctl-bg);
+    --imgctl-line: var(--rte-line);
+    --imgctl-ink: var(--rte-ctl-ink);
+    --imgctl-dim: var(--rte-ctl-dim);
+    --imgctl-accent: var(--rte-accent);
+    --imgctl-btn-bg: var(--rte-btn);
+    --imgctl-btn-ink: var(--rte-btn-ink);
+    --imgctl-mode-on: var(--mc-white);
+    --imgctl-mode-shadow: var(--rte-mode-shadow);
+    --imgctl-reset-bg: var(--rte-reset);
+    --imgctl-apply-bg: var(--rte-apply);
+    --imgctl-apply-hover: var(--rte-apply-hover);
+    --imgctl-apply-shadow: var(--rte-apply-shadow);
+    --imgctl-apply-ink: var(--mc-white);
+
+    display: none;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--imgctl-gap);
+    margin-top: 8px;
+    padding: var(--imgctl-pad);
+    border: 1px solid var(--imgctl-line);
+    border-radius: 30px;
+    background: var(--imgctl-bg);
+    font-size: var(--imgctl-font);
+    color: var(--imgctl-ink);
+}
+
+.imgctl.show { display: flex; animation: imgctlIn .18s ease both; }
+@keyframes imgctlIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.imgctl [data-part=icon] { white-space: nowrap; }
+
+.imgctl input[type=range] {
+    flex: 1;
+    min-width: 80px;
+    height: 4px;
+    accent-color: var(--imgctl-accent);
+    cursor: pointer;
+}
+
+.imgctl [data-part=val] {
+    min-width: var(--imgctl-val-min);
+    text-align: center;
+    font-weight: 600;
+}
+
+.imgctl [data-part=px] {
+    font-size: var(--imgctl-px-font);
+    color: var(--imgctl-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.imgctl [data-part=modes] {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 30px;
+    background: var(--imgctl-btn-bg);
+}
+
+.imgctl [data-part=modes] .m {
+    padding: 2px 12px;
+    border: none;
+    border-radius: 30px;
+    background: transparent;
+    color: var(--imgctl-ink);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.imgctl [data-part=modes] .m.on {
+    background: var(--imgctl-mode-on);
+    color: var(--imgctl-btn-ink);
+    font-weight: 600;
+    box-shadow: 0 1px 4px var(--imgctl-mode-shadow);
+}
+
+.imgctl button[data-part] {
+    padding: var(--imgctl-btn-pad);
+    border: none;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: var(--imgctl-btn-font);
+    color: var(--imgctl-btn-ink);
+    background: var(--imgctl-btn-bg);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.imgctl button[data-part=reset] { background: var(--imgctl-reset-bg); color: var(--imgctl-ink); }
+.imgctl button[data-part=apply] {
+    padding: var(--imgctl-apply-pad);
+    background: var(--imgctl-apply-bg);
+    color: var(--imgctl-apply-ink);
+    font-weight: 600;
+    box-shadow: 0 1px 5px var(--imgctl-apply-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .imgctl button[data-part=reset]:hover,
+    .imgctl button[data-part=cancel]:hover { background: var(--imgctl-line); }
+    .imgctl button[data-part=apply]:hover { background: var(--imgctl-apply-hover); }
+}
+
+/* 我的卡片：同一套结构，只覆盖本页原有的数值与色板 */
+.imgctl--mc {
+    --imgctl-gap: 10px;
+    --imgctl-pad: 6px 14px;
+    --imgctl-font: 13px;
+    --imgctl-val-min: 40px;
+    --imgctl-px-font: 12px;
+    --imgctl-btn-pad: 3px 16px;
+    --imgctl-btn-font: 12.5px;
+    --imgctl-apply-pad: 3px 16px;
+    --imgctl-bg: var(--mc-imgctl-bg);
+    --imgctl-line: var(--mc-editor-border);
+    --imgctl-ink: var(--mc-imgctl-fg);
+    --imgctl-dim: var(--mc-imgctl-muted);
+    --imgctl-accent: var(--mc-imgctl-accent);
+    --imgctl-btn-bg: var(--mc-cancel-bg);
+    --imgctl-btn-ink: var(--mc-title-fg);
+    --imgctl-mode-on: var(--mc-white);
+    --imgctl-mode-shadow: var(--mc-editor-04);
+    --imgctl-reset-bg: var(--mc-imgctl-lock-bg);
+    --imgctl-apply-bg: var(--mc-primary-bg);
+    --imgctl-apply-hover: var(--mc-primary-hover);
+    --imgctl-apply-shadow: var(--mc-editor-05);
+    --imgctl-apply-ink: var(--mc-white);
+}
+
+@media (max-width: 640px) {
+    .imgctl--mc { flex-wrap: wrap; gap: 6px; }
+}

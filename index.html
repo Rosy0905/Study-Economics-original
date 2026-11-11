@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E0D1EF">
+<title>南开经济学 · 知识库</title>
+<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
+<link rel="stylesheet" href="ui/components.css?v=20261110a">
+<link rel="stylesheet" href="ui/home.css?v=20261110a">
+</head>
+<body class="page-home">
+<div class="home-wrap">
+
+  <header class="home-head">
+    <a class="hdr-search" id="hdrSearch" href="./search.html" aria-label="全站搜索">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6" stroke="currentColor" stroke-width="2"/><path d="M15.7 15.7L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </a>
+    <h1 id="homeTitle">南开经济学 · 知识库</h1>
+    <p id="homeSubtitle"></p>
+  </header>
+
+  <div class="home-grid" id="homeGrid"></div>
+
+  <a class="mine-bar" href="./mycards.html">
+    <span class="mine-bar-ic">📒</span>
+    <span class="mine-bar-txt"><b>我的卡片</b><i>自己整理与收藏的卡片</i></span>
+    <span class="mine-bar-go">进入 →</span>
+  </a>
+  <!-- 我的卡片通栏已静态化：原由 home.js 按 myCards 配置动态注入，现写死骨架，脚本未跑也能进入；module 形态由生成器改为网格卡时不输出此块 -->
+
+  <!-- 学习进度条：清除数据与导入导出的入口由独立模块接入两端 -->
+  <div class="home-note" id="noteBar">
+    <span class="lb">📝 学习进度</span>
+    <input id="progressNote" placeholder="随手记一句：今天背到哪、哪块还没搞懂、下一步计划…" />
+    <!-- 朗读控件（引擎：engine/tts.js） -->
+    <div class="tts" id="ttsBox">
+      <button class="tts-btn" id="ttsBtn" type="button" title="朗读学习进度" aria-label="朗读学习进度"></button>
+      <input class="tts-range" id="ttsRate" type="range" min="0.5" max="2" step="0.1" value="1" title="朗读语速" aria-label="朗读语速" />
+      <span class="tts-val" id="ttsVal">1.0×</span>
+    </div>
+
+    <!-- 清除数据：点「清除」展开花瓣选模块，点「✓」弹确认层 -->
+    <div class="clear-section" id="clearSection">
+      <div class="petal-layer" id="petalLayer"></div>
+      <button class="clear-btn" id="clearBtn" type="button">
+        <span id="clearText">清除</span>
+      </button>
+    </div>
+
+    <!-- 导入导出：点「同步」上下各弹一球（上 导入 / 下 导出） -->
+    <div class="sync-section" id="syncSection">
+      <div class="sync-orb import" id="orbImport" title="导入数据（从 JSON 备份恢复）">
+        <span class="orb-ic">📥</span>
+        <span class="orb-tx">导入</span>
+      </div>
+      <div class="sync-orb export" id="orbExport" title="导出数据（保存为 JSON 文件）">
+        <span class="orb-ic">📤</span>
+        <span class="orb-tx">导出</span>
+      </div>
+      <button class="sync-btn" id="syncBtn" type="button">同步</button>
+    </div>
+  </div>
+
+  <footer class="home-foot" id="homeFooter">
+    <span class="home-foot-line">© 南开经济学备考知识库</span>
+    <span class="home-foot-line">数据仅保存在本机浏览器，换设备或清理缓存会丢失</span>
+  </footer>
+
+</div>
+
+<!-- 轻提示（KB.UI.toast） -->
+<div class="toast" id="toast"></div>
+
+<!-- 学习进度卡片（点进度输入框弹出） -->
+<div class="prog-overlay" id="progOverlay">
+  <div class="prog-card" role="dialog" aria-labelledby="progCardTtl">
+    <div class="prog-card-head">
+      <span class="ttl" id="progCardTtl">📝 学习进度</span>
+      <span class="dt"></span>
+      <button class="prog-card-close" type="button" aria-label="关闭">✕</button>
+    </div>
+    <textarea placeholder="随手写：今天背到哪、哪块还没搞懂、下一步计划…"></textarea>
+    <div class="prog-card-foot">
+      <span class="prog-cnt">0 字</span>
+      <div class="prog-tools">
+        <button class="prog-tool prog-tts" type="button">🔊 朗读</button>
+        <button class="prog-tool prog-clear" type="button">清空</button>
+        <button class="prog-tool prog-save" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 清除数据确认弹层 -->
+<div class="dlg-overlay" id="confirmOverlay">
+  <div class="dlg-box" role="dialog" aria-labelledby="confirmTitle">
+    <div class="dlg-icon">⚠️</div>
+    <p class="dlg-title" id="confirmTitle">确认清除</p>
+    <p class="dlg-desc">以下章节的数据将被清除：</p>
+    <ul class="dlg-list" id="confirmList"></ul>
+    <p class="dlg-warn">此操作不可恢复，请谨慎操作</p>
+    <div class="dlg-btns">
+      <button class="cbtn cbtn-cancel" id="confirmCancel" type="button">取消</button>
+      <button class="cbtn cbtn-ok" id="confirmOk" type="button">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出选择弹层 -->
+<div class="dlg-overlay export-overlay" id="exportOverlay">
+  <div class="dlg-box export-box" role="dialog" aria-labelledby="exportTitle">
+    <div class="dlg-icon">📤</div>
+    <p class="dlg-title" id="exportTitle">导出数据</p>
+    <p class="dlg-desc">勾选需要备份的内容</p>
+    <div class="export-opts">
+      <label class="exp-opt" id="optStudy">
+        <input type="checkbox" id="expStudy" checked disabled />
+        <span class="exp-tick"></span>
+        <span class="exp-txt">
+          <b>学习数据</b>
+          <i>收藏 / 笔记 / 编辑 / 学习进度</i>
+        </span>
+        <span class="exp-badge">必导</span>
+      </label>
+      <label class="exp-opt" id="optImages">
+        <input type="checkbox" id="expImages" checked />
+        <span class="exp-tick"></span>
+        <span class="exp-txt">
+          <b>笔记图片</b>
+          <i>取消勾选即纯文字版，文件小得多</i>
+        </span>
+      </label>
+      <label class="exp-opt" id="optConfig">
+        <input type="checkbox" id="expConfig" checked />
+        <span class="exp-tick"></span>
+        <span class="exp-txt">
+          <b>AI 配置</b>
+          <i>提示词 / 面板尺寸 / 卡片记忆（不含 API Key）</i>
+        </span>
+      </label>
+      <label class="exp-opt" id="optHistory">
+        <input type="checkbox" id="expHistory" checked />
+        <span class="exp-tick"></span>
+        <span class="exp-txt">
+          <b>AI 对话历史</b>
+          <i>体积最大，通常占 80% 以上</i>
+        </span>
+      </label>
+    </div>
+    <p class="export-size" id="exportSize"></p>
+    <div class="dlg-btns">
+      <button class="cbtn cbtn-cancel" id="exportCancel" type="button">取消</button>
+      <button class="cbtn cbtn-export" id="exportOk" type="button">导出</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入用的文件选择器（确认弹层由 KB.UI.confirm 动态生成） -->
+<input type="file" id="importFile" accept=".json,application/json" style="display:none" />
+
+<script src="palette.config.js?v=20261110a"></script>
+<script src="project.config.js?v=20261110a"></script>
+<script src="engine/render/common.js?v=20261110a"></script>
+<script src="engine/ui.js?v=20261110a"></script>
+<script src="engine/store.js?v=20261110a"></script>
+<script src="engine/blobstore.js?v=20261110a"></script>
+<script src="engine/tts.js?v=20261110a"></script>
+<script src="engine/clear/core.js?v=20261110a"></script>
+<script src="engine/clear/petal.js?v=20261110a"></script>
+<script src="engine/sync/wechat.js?v=20261110a"></script>
+<script src="engine/sync/core.js?v=20261110a"></script>
+<script src="engine/home.js?v=20261110a"></script>
+</body>
+</html>

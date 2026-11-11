@@ -1,0 +1,165 @@
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+        background: var(--ss-001); color: var(--ss-002); padding: 20px;
+    }
+    /* ---------- 顶栏 ---------- */
+    .topbar {
+        max-width: 1000px; margin: 0 auto 18px auto; background: var(--ss-003);
+        padding: 14px 22px; border-radius: 18px;
+        box-shadow: 0 4px 12px var(--ss-004);
+        display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+    }
+    /* 26/10/27：与各模块页返回按钮统一为同款 */
+    .topbar .back {
+        display: inline-flex; align-items: center; gap: 5px; text-decoration: none;
+        background: var(--ss-005); color: var(--ss-006); padding: 7px 15px 7px 11px; border-radius: 30px;
+        font-size: 13.5px; font-weight: 600; flex: 0 0 auto; white-space: nowrap;
+        box-shadow: 0 1px 3px var(--ss-007);
+        transition: background .2s, box-shadow .2s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .topbar .back:hover { background: var(--ss-008); box-shadow: 0 4px 12px var(--ss-009); }
+        .topbar .back:hover .arrow { transform: translateX(-3px); }
+    }
+    .topbar .back:active { background: var(--ss-008); }
+    .topbar .back .arrow { font-size: 15px; line-height: 1; transition: transform .2s; }
+    .topbar h1 { font-size: 18px; font-weight: 600; color: var(--ss-006); letter-spacing: .3px; flex: 0 0 auto; }
+    .search-wrap { position: relative; display: inline-flex; align-items: center; margin-left: auto; flex: 1 1 260px; max-width: 420px; }
+    input[type="text"] {
+        width: 100%; padding: 9px 36px 9px 17px; border-radius: 30px; border: 1px solid var(--ss-010);
+        background: var(--ss-011); font-size: 13.5px; color: var(--ss-002); outline: none; font-family: inherit;
+    }
+    input[type="text"]::placeholder { color: var(--ss-012); }
+    input[type="text"]:focus { border-color: var(--ss-013); box-shadow: 0 0 0 3px var(--ss-014); }
+    /* 清空按钮：SVG 画叉，字符「×」基线受字体影响总偏下 */
+    .reset {
+        position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+        width: 20px; height: 20px; padding: 0; border: none; border-radius: 50%;
+        background: var(--ss-015); color: var(--ss-016); cursor: pointer;
+        display: none; align-items: center; justify-content: center;
+        transition: background .15s, color .15s;
+    }
+    .reset svg { width: 9px; height: 9px; display: block; }
+    .reset.show { display: inline-flex; }
+    .reset:hover { background: var(--ss-017); color: var(--ss-018); }
+
+    /* ---------- 正文 ---------- */
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .sum {
+        /* 摘要条：低饱和多色底，色相顺序跟下面模块标题带一致。
+           整条靠底色跟白底卡片分层，所以不再叠边框、阴影、外发光——
+           三个弱手段叠在一起只会把边缘压浑，一个手段干一件事更清楚。
+           正文近黑，压在最浅的一段上也够清楚 */
+        background: linear-gradient(96deg,
+            var(--ss-019) 0%, var(--ss-020) 15%, var(--ss-021) 32%,
+            var(--ss-022) 48%, var(--ss-023) 63%, var(--ss-024) 80%,
+            var(--ss-025) 100%), var(--ss-026);
+        border-radius: 14px; padding: 13px 18px; margin-bottom: 14px;
+        font-size: 13.5px; color: var(--ss-027);
+    }
+    .sum b { color: var(--ss-028); }
+    /* 分组配色（26/10/28）：色值取自主页各模块卡片，卡片本身仍是白底，
+       只在标题带、编号标签、章节文字三处上色，靠色相区分模块 */
+    /* 四个层级由深到浅：--c 标题 > --cd 标签文字 > --soft 标题带 > --cm 章节文字
+       --c 标题色（各模块色压深一档，整页只有这一层用重色）
+       --soft 标题带 / --sb 编号标签底 / --cd 编号标签文字
+         带子和标签分开取值：带子要盖过页面底色 0.91 的亮度才看得出边界，取模块色 18% 混白；
+         标签是小字，底太深会压掉文字对比度，仍用较浅的色，两种东西不共用一个值
+       --ch 单条悬停底（比 --sb 淡一档，指过去能看出来又不跳）
+       --cm 章节与提示文字（最淡一层，只保留色相用来分组）
+       --cbw 展开按钮文字（比 --cm 重一档，按钮要有存在感）
+       --cb/--cbh/--cbd 展开按钮的底、悬停底、虚线框 */
+    .grp {
+        --c: var(--ss-006); --soft: var(--ss-029); --sb: var(--ss-030); --cd: var(--ss-016); --ch: var(--ss-030);
+        --cm: var(--ss-031); --cbw: var(--ss-032); --cb: var(--ss-033); --cbh: var(--ss-034); --cbd: var(--ss-035);
+        background: var(--ss-026); border-radius: 14px; padding: 0 16px 10px 16px; margin-bottom: 14px;
+        box-shadow: 0 2px 10px var(--ss-036);
+    }
+    .grp[data-mod="1micro-recitation"] {
+        --c: var(--ss-037); --soft: var(--ss-029); --sb: var(--ss-038); --cd: var(--ss-039); --ch: var(--ss-040);
+        --cm: var(--ss-041); --cbw: var(--ss-042); --cb: var(--ss-043); --cbh: var(--ss-044); --cbd: var(--ss-045);
+    }
+    .grp[data-mod="2macro-recitation"] {
+        --c: var(--ss-046); --soft: var(--ss-047); --sb: var(--ss-048); --cd: var(--ss-049); --ch: var(--ss-050);
+        --cm: var(--ss-051); --cbw: var(--ss-052); --cb: var(--ss-053); --cbh: var(--ss-054); --cbd: var(--ss-055);
+    }
+    .grp[data-mod="3calc-keypoints"] {
+        --c: var(--ss-056); --soft: var(--ss-057); --sb: var(--ss-058); --cd: var(--ss-059); --ch: var(--ss-060);
+        --cm: var(--ss-061); --cbw: var(--ss-062); --cb: var(--ss-063); --cbh: var(--ss-064); --cbd: var(--ss-065);
+    }
+    .grp[data-mod="4calc-special"] {
+        --c: var(--ss-066); --soft: var(--ss-067); --sb: var(--ss-068); --cd: var(--ss-069); --ch: var(--ss-070);
+        --cm: var(--ss-071); --cbw: var(--ss-072); --cb: var(--ss-073); --cbh: var(--ss-074); --cbd: var(--ss-075);
+    }
+    .grp[data-mod="5micro-short-answer"] {
+        --c: var(--ss-076); --soft: var(--ss-077); --sb: var(--ss-078); --cd: var(--ss-079); --ch: var(--ss-080);
+        --cm: var(--ss-081); --cbw: var(--ss-082); --cb: var(--ss-083); --cbh: var(--ss-084); --cbd: var(--ss-085);
+    }
+    .grp[data-mod="6macro-short-answer"] {
+        --c: var(--ss-086); --soft: var(--ss-087); --sb: var(--ss-088); --cd: var(--ss-089); --ch: var(--ss-090);
+        --cm: var(--ss-091); --cbw: var(--ss-092); --cb: var(--ss-093); --cbh: var(--ss-094); --cbd: var(--ss-095);
+    }
+    .grp[data-mod="7essay"] {
+        --c: var(--ss-096); --soft: var(--ss-097); --sb: var(--ss-098); --cd: var(--ss-099); --ch: var(--ss-100);
+        --cm: var(--ss-101); --cbw: var(--ss-102); --cb: var(--ss-103); --cbh: var(--ss-104); --cbd: var(--ss-105);
+    }
+    .grp[data-mod="8past-exams"] {
+        --c: var(--ss-106); --soft: var(--ss-107); --sb: var(--ss-108); --cd: var(--ss-109); --ch: var(--ss-110);
+        --cm: var(--ss-111); --cbw: var(--ss-112); --cb: var(--ss-113); --cbh: var(--ss-114); --cbd: var(--ss-115);
+    }
+    .grp[data-mod="9my-cards"] {
+        --c: var(--ss-116); --soft: var(--ss-117); --sb: var(--ss-118); --cd: var(--ss-119); --ch: var(--ss-120);
+        --cm: var(--ss-121); --cbw: var(--ss-122); --cb: var(--ss-123); --cbh: var(--ss-124); --cbd: var(--ss-125);
+    }
+    .grp-head {
+        display: flex; align-items: baseline; gap: 9px;
+        margin: 0 -16px 7px -16px; padding: 9px 16px 8px;
+        background: var(--soft); border-radius: 14px 14px 0 0;
+        font-size: 13.5px; font-weight: 700; color: var(--c);
+    }
+    .grp-head span { font-weight: 500; font-size: 11.5px; color: var(--c); opacity: .62; }
+    .hit {
+        display: flex; gap: 9px; align-items: baseline;
+        padding: 8px 9px; border-radius: 9px; text-decoration: none;
+        color: var(--ss-126); font-size: 13px; line-height: 1.68;
+        transition: background .14s;
+    }
+    .hit:hover { background: var(--ch); }
+    /* 从子页返回时，刚点过的那条闪一下 */
+    .hit.hit-flash { background: var(--ss-127); outline: 2px solid var(--ss-128); outline-offset: -2px; }
+    .no {
+        flex: 0 0 auto; font-size: 11.5px; font-weight: 600; color: var(--cd);
+        background: var(--sb); border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+    }
+    .txt { flex: 1 1 auto; min-width: 0; }
+    .txt em { font-style: normal; background: var(--ss-129); color: var(--ss-130); border-radius: 3px; padding: 0 1px; }
+    .meta {
+        flex: 0 0 auto; font-size: 11.5px; color: var(--cm); max-width: 190px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    /* 「命中在答案里」跟右侧章节文字同一浓度，是同一层级的补充说明 */
+    .tip { color: var(--cm); font-size: 11.5px; }
+    /* 每组封顶 40 张，剩下的靠这个按钮点开再渲染：不点就不花这个钱 */
+    .more-btn {
+        display: block; width: 100%; margin: 6px 0 2px; padding: 9px 10px;
+        border: 1px dashed var(--cbd); border-radius: 9px; background: var(--cb);
+        font: inherit; font-size: 12.5px; color: var(--cbw); cursor: pointer;
+        transition: background .14s, border-color .14s, color .14s;
+    }
+    .more-btn:hover { background: var(--cbh); border-color: var(--cd); color: var(--cd); }
+    .more-btn:active { background: var(--cbh); }
+    .empty {
+        background: var(--ss-026); border-radius: 14px; padding: 34px 20px; text-align: center;
+        font-size: 14px; color: var(--ss-131); box-shadow: 0 2px 10px var(--ss-036);
+    }
+    .empty span { font-size: 12.5px; color: var(--ss-132); line-height: 2; }
+    .empty a { color: var(--ss-018); font-weight: 600; text-decoration: none; }
+    .empty a:hover { text-decoration: underline; }
+    @media (max-width: 640px) {
+        body { padding: 12px; }
+        .topbar { padding: 12px 15px; gap: 9px; }
+        .search-wrap { flex-basis: 100%; max-width: none; margin-left: 0; }
+        .meta { display: none; }
+    }

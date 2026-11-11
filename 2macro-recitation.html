@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E0D1EF">
+<title>宏观背诵 · 记忆卡</title>
+
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
+<link rel="stylesheet" href="ui/components.css?v=20261110a">
+<link rel="stylesheet" href="ui/section-nav.css?v=20261110a">
+<link rel="stylesheet" href="ui/page.css?v=20261110a">
+<link rel="stylesheet" href="ui/richnote.css?v=20261110a">
+<link rel="stylesheet" href="ui/imgctl.css?v=20261110a">
+<link rel="stylesheet" href="ui/top-btn.css?v=20261110a">
+
+<link rel="stylesheet" href="ui/ai.css?v=20261110a">
+<script src="engine/search-jump.js?v=20261110a"></script>
+</head>
+
+<body data-preset="tinted">
+
+<header class="app-header">
+  <h1 id="pageTitle">南开经济学 · 宏观背诵手册记忆卡</h1>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <div class="dims" id="filterDims"></div>
+  <span class="search-wrap"><input type="text" id="pageSearch" placeholder="搜索题目关键词…"><button type="button" class="search-clear" id="pageClear" aria-label="清空搜索"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 2.2l7.6 7.6M9.8 2.2l-7.6 7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></span>
+  <button type="button" class="btn-soft" id="btnReset">重置筛选</button>
+  <button type="button" class="btn-random" id="btnRandom">🎲 随机抽查</button>
+</div>
+
+<div class="single-mode-bar" id="singleModeBar">
+  <div class="mode-left">
+    <button type="button" class="btn-nav" id="prevCardBtn" title="上一张">◀</button>
+    <span class="card-id-badge" id="singleCardBadge">卡片 #1</span>
+    <button type="button" class="btn-nav" id="nextCardBtn" title="下一张">▶</button>
+    <span class="mode-hint">抽查中</span>
+  </div>
+  <button type="button" class="btn-exit-single" id="exitSingleBtn" title="退出抽查模式">✕</button>
+</div>
+
+<main class="card-grid" id="cardGrid"></main>
+
+<div class="empty" id="empty" hidden>没有符合条件的卡片</div>
+
+<div class="footer-note" id="footerNote"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="palette.config.js?v=20261110a"></script>
+<script src="project.config.js?v=20261110a"></script>
+<script src="2macro-recitation.config.js?v=20261110a"></script>
+<script src="data/2macro-recitation.js?v=20261110a"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="engine/render/common.js?v=20261110a"></script>
+<script src="engine/lines.js?v=20261110a"></script>
+<script src="engine/render/table.js?v=20261110a"></script>
+<script src="engine/render/unicode.js?v=20261110a"></script>
+<script src="engine/render/latex.js?v=20261110a"></script>
+<script src="engine/card.js?v=20261110a"></script>
+<script src="engine/filters.js?v=20261110a"></script>
+<script src="engine/store.js?v=20261110a"></script>
+<script src="engine/ui.js?v=20261110a"></script>
+<script src="engine/userdata.js?v=20261110a"></script>
+<script src="engine/blobstore.js?v=20261110a"></script>
+<script src="engine/image-store.js?v=20261110a"></script>
+<script src="engine/notes.js?v=20261110a"></script>
+<script src="engine/imgctl/core.js?v=20261110a"></script>
+<script src="engine/editor/core.js?v=20261110a"></script>
+<script src="engine/richnote.js?v=20261110a"></script>
+<script src="engine/edit.js?v=20261110a"></script>
+<script src="engine/selftest.js?v=20261110a"></script>
+<script src="engine/filtermemory.js?v=20261110a"></script>
+<script src="engine/single.js?v=20261110a"></script>
+<script src="nav.config.js?v=20261110a"></script>
+<script src="engine/section-nav.js?v=20261110a"></script>
+<script src="engine/page.js?v=20261110a"></script>
+
+<script>
+KB.Page.mount();
+</script>
+
+<script src="ai.config.js?v=20261110a"></script>
+<script src="engine/ai/common.js?v=20261110a"></script>
+<script src="engine/ai/codec.js?v=20261110a"></script>
+<script src="engine/ai/storage.js?v=20261110a"></script>
+<script src="engine/ai/markdown.js?v=20261110a"></script>
+<script src="engine/ai/context.js?v=20261110a"></script>
+<script src="engine/ai/attach.js?v=20261110a"></script>
+<script src="engine/ai/nav.js?v=20261110a"></script>
+<script src="engine/ai/messages.js?v=20261110a"></script>
+<script src="engine/ai/stream.js?v=20261110a"></script>
+<script src="engine/ai/share.js?v=20261110a"></script>
+<script src="engine/ai/cards.js?v=20261110a"></script>
+<script src="engine/ai/core.js?v=20261110a"></script>
+<script>KB.AI.mount();</script>
+<script src="engine/top-btn.js?v=20261110a"></script>
+</body>
+</html>

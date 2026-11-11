@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#E0D1EF">
+<title>全站搜索 · 南开经济学 · 知识库</title>
+<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
+<link rel="stylesheet" href="ui/search.css?v=20261110a">
+</head>
+<body>
+
+<div class="topbar">
+    <a class="back" href="index.html"><span class="arrow">⬅</span><span>主页</span></a>
+    <h1>全站搜索</h1>
+    <span class="search-wrap">
+        <input id="kw" type="text" placeholder="搜全部模块 / 真题 / 我的卡片…" autocomplete="off" />
+        <button id="reset" class="reset" type="button" aria-label="清空">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 2.2l7.6 7.6M9.8 2.2l-7.6 7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+    </span>
+</div>
+
+<div class="wrap" id="wrap">
+    <div class="empty" id="boot">正在准备索引…</div>
+</div>
+
+<script src="search-index.js?v=20261110a"></script>
+<script src="project.config.js?v=20261110a"></script>
+<script src="engine/store.js?v=20261110a"></script>
+<script src="engine/site-search.js?v=20261110a"></script>
+<script>KB.SiteSearch.mount();</script>
+</body>
+</html>

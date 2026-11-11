@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E0D1EF">
+<title>我的卡片 · 南开经济学 · 知识库</title>
+
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
+<link rel="stylesheet" href="ui/section-nav.css?v=20261110a">
+<link rel="stylesheet" href="ui/mycards.css?v=20261110a">
+<link rel="stylesheet" href="ui/imgctl.css?v=20261110a">
+<link rel="stylesheet" href="ui/ai.css?v=20261110a">
+<link rel="stylesheet" href="ui/top-btn.css?v=20261110a">
+<script src="engine/search-jump.js?v=20261110a"></script>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="header-left">
+            <a href="index.html" class="back-home" title="返回主页">
+                <span class="arrow">⬅</span><span>主页</span>
+            </a>
+            <h1>📒 我的卡片</h1>
+        </div>
+        <div class="header-right">
+            <div class="stats">
+                <span>📚 总卡 <span class="num" id="totalCards">0</span></span>
+                <span>⭐ 收藏 <span class="num" id="favCount">0</span></span>
+            </div>
+
+            <!-- 调顺序：常态雾紫灰，进入模式转柔和藕紫；与另两颗球同形 -->
+            <div class="orb-wrap orb-sort" id="sortWrap">
+                <button type="button" class="orb-btn orb-sort-btn" id="sortModeBtn"
+                        title="调整卡片顺序"><span class="orb-dot"></span><span class="orb-flag"></span></button>
+            </div>
+
+            <!-- 清空数据：绿色小圆点，hover 只把绿加深 -->
+            <div class="orb-wrap" id="clearWrap">
+                <button type="button" class="orb-btn orb-clear" id="clearDataBtn"
+                        title="清空全部数据（卡片和章节）"><span class="orb-dot"></span></button>
+            </div>
+
+            <!-- 数据：绿色小圆点，点开才向下 / 向右出现「导入 / 导出」（照主页那两颗：粉 / 紫） -->
+            <div class="orb-wrap orb-io" id="ioWrap">
+                <div class="orb-fan">
+                    <button type="button" class="orb-mini io-import" id="importBtn" title="从 JSON 文件导入">
+                        <span class="orb-ic">📥</span><span class="orb-tx">导入</span>
+                    </button>
+                    <button type="button" class="orb-mini io-export" id="exportBtn" title="导出为 JSON 文件">
+                        <span class="orb-ic">📤</span><span class="orb-tx">导出</span>
+                    </button>
+                </div>
+                <button type="button" class="orb-btn orb-data" id="ioBtn" title="导入 / 导出数据"><span class="orb-dot"></span></button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="filter-bar" id="filterBar">
+        <button class="btn btn-primary" id="addCardBtn">＋ 新建卡片</button>
+
+        <!-- 章节下拉的组标题是可点 option，选中即该分类全部章节；
+             optgroup 不可选中，故不用；成员项用全角空格缩进。 -->
+        <label for="filterChapter">章节</label>
+        <select id="filterChapter" title="章节按分类分组；选中组标题 = 该分类全部章节"><option value="all">全部</option></select>
+
+        <label for="filterFav">⭐ 收藏</label>
+        <select id="filterFav">
+            <option value="all">全部</option>
+            <option value="fav">仅收藏</option>
+        </select>
+
+        <span class="search-wrap"><input type="text" class="filter-search" id="filterSearch" placeholder="搜索题目关键词…" /><button type="button" class="search-clear" id="mcSearchClear" aria-label="清空搜索"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 2.2l7.6 7.6M9.8 2.2l-7.6 7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></span>
+
+        <button class="btn btn-clear-filter" id="clearFilterBtn">重置筛选</button>
+        <button class="btn btn-ghost" id="expandAllBtn">全部展开</button>
+        <button class="btn btn-ghost btn-ai-import" id="aiImportBtn"
+                title="把 AI 答疑助手里的回答一键变成卡片">从 AI 对话导入</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden />
+    </div>
+
+    <div class="card-grid" id="cardGrid"></div>
+
+    <p class="usage-hint">点击新建卡片即可添加卡片 · 答案支持富文本（BIU / 图片 / 表格 / 公式）</p>
+
+    <!-- ================= 新建 / 编辑 弹层 ================= -->
+    <div class="modal-overlay" id="editorOverlay">
+        <div class="modal">
+            <div class="modal-head">
+                <span class="title" id="modalTitle">新建卡片</span>
+                <button class="close" id="closeModalBtn" title="关闭">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <label class="field-label">
+                    分类
+                    <span class="hint">章节里按住 ⠿ 可拖动排序 · 序号用于章节内排序，如 Q1、Q2、Q10</span>
+                </label>
+                <div class="classify-row">
+                    <select class="subject-select" id="subjectSelect">
+                        <option value="微观">微观</option>
+                        <option value="宏观">宏观</option>
+                    </select>
+                    <div class="chapter-field" id="chapterField">
+                        <button type="button" class="chapter-trigger" id="chapterTrigger">
+                            <span class="ct-text empty" id="chapterTriggerText">选择章节</span>
+                            <span class="ct-caret">▼</span>
+                        </button>
+                        <div class="chapter-pop" id="chapterPop">
+                            <div class="ch-scope" id="chScope">当前分类：<b id="chScopeName">微观</b></div>
+                            <div class="chapter-pop-list" id="chapterPopList"></div>
+                            <div class="chapter-pop-new">
+                                <button type="button" class="btn-ch-new" id="chapterNewBtn">＋ 新建章节</button>
+                                <div class="ch-new-input" id="chNewInputWrap" hidden>
+                                    <input type="text" id="chapterNameInput" placeholder="输入章节名称"
+                                           autocomplete="off" maxlength="60">
+                                    <button type="button" class="btn-ch-add" id="chapterAddIcon"
+                                            title="确认新建" disabled>确认</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="text" class="index-input" id="indexInput"
+                           placeholder="序号" autocomplete="off" maxlength="12">
+                    <label class="has-img-toggle" id="hasImgToggle">
+                        <input type="checkbox" id="hasImgInput">
+                        <span>📐 有图示</span>
+                    </label>
+                </div>
+
+                <div class="field-gap"></div>
+
+                <label class="field-label" for="questionInput">题目</label>
+                <textarea class="question-input" id="questionInput"
+                          placeholder="请输入题目…（可换行）"></textarea>
+
+                <div class="field-gap"></div>
+
+                <label class="field-label">
+                    答案
+                    <span class="hint">富文本 · 表格 · 公式 · 图片</span>
+                </label>
+                <div class="rich-editor" id="answerEditor" contenteditable="true"
+                     data-placeholder="在这里写下答案…&#10;&#10;公式写法：行内 $Q_d = a - bP$，独占一行 $$E_d = \frac{\Delta Q}{\Delta P}\cdot\frac{P}{Q}$$"></div>
+
+                <div id="imgCtlHost"></div>
+
+                <div class="editor-tools">
+                    <button type="button" class="btn-format" data-cmd="bold" title="加粗（Ctrl+B）"><b>B</b></button>
+                    <button type="button" class="btn-format" data-cmd="italic" title="斜体（Ctrl+I）"><i>I</i></button>
+                    <button type="button" class="btn-format" data-cmd="underline" title="下划线（Ctrl+U）"><u>U</u></button>
+                    <button type="button" class="btn-format btn-clear-fmt" id="clearFmtBtn"
+                            title="清除格式：选中文字 → 去掉加粗/斜体/下划线；只是光标停着 → 后面打的字不再跟着前面的样式">清格式</button>
+                    <span class="sev"></span>
+                    <button type="button" class="btn-insert-img" id="insertImgBtn">🖼️ 插入图片</button>
+                    <button type="button" class="btn-insert-table" id="insertTableBtn">▦ 插入表格</button>
+                    <button type="button" class="btn-insert-formula" id="insertInlineFormulaBtn">∑ 行内公式</button>
+                    <button type="button" class="btn-insert-formula" id="insertBlockFormulaBtn">∑ 块级公式</button>
+                    <button type="button" class="btn-clear-answer" id="clearAnswerBtn">🧹 清空答案</button>
+                    <span class="tip">可直接粘贴截图 · 点图片调尺寸（缩放只改显示，压缩才压体积）· 光标停在图片右边按退格即删除</span>
+                </div>
+            </div>
+
+            <div class="modal-foot">
+                <button class="btn-cancel" id="cancelBtn">取消</button>
+                <button class="btn-ok" id="saveBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 插入表格 弹窗 ================= -->
+    <div class="modal-overlay" id="tableOverlay">
+        <div class="table-modal">
+            <div class="confirm-title">插入表格</div>
+            <div class="table-form">
+                <label for="tableRows">行数</label>
+                <input type="number" id="tableRows" value="3" min="1" max="20">
+                <label for="tableCols">列数</label>
+                <input type="number" id="tableCols" value="3" min="1" max="10">
+                <div class="field-hint">行数含表头行，最多 20 行 / 10 列</div>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-ok" id="tableOkBtn">插入</button>
+                <button class="btn-cancel" id="tableCancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 通用确认 弹层 ================= -->
+    <div class="modal-overlay" id="confirmOverlay">
+        <div class="confirm-modal">
+            <div class="confirm-title" id="confirmTitle">确认删除</div>
+            <div class="confirm-msg" id="confirmMsg">确定要删除这张卡片吗？</div>
+            <div class="confirm-actions">
+                <button class="btn-ok btn-danger" id="confirmOkBtn">删除</button>
+                <button class="btn-cancel" id="confirmCancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 清除数据：先选方式（复用生成分享弹层组件） ================= -->
+    <div class="ai-share-choice-ov" id="clearChoiceOverlay">
+        <div class="ai-share-choice-box">
+            <div class="ai-share-choice-title">清除数据</div>
+            <div class="ai-share-choice-sub" id="clearChoiceSub">请选择清除方式：</div>
+            <button type="button" class="ai-share-opt" data-mode="part">
+                <span class="choice-icon"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"></rect><path d="M5 8h6"></path></svg></span>
+                <span class="opt-txt"><span class="opt-tt">部分删除</span><span class="opt-dd">勾选要删掉的卡片，其余卡片与章节都保留</span></span>
+            </button>
+            <button type="button" class="ai-share-opt" data-mode="all">
+                <span class="choice-icon"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"></rect><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"></path></svg></span>
+                <span class="opt-txt"><span class="opt-tt">清空全部</span><span class="opt-dd">删除全部卡片与章节，此操作不可恢复</span></span>
+            </button>
+            <button type="button" class="ai-share-choice-cancel" id="clearChoiceCancelBtn">取消</button>
+        </div>
+    </div>
+
+    <!-- ================= 清空全部数据 弹层 ================= -->
+    <div class="modal-overlay" id="clearOverlay">
+        <div class="confirm-modal">
+            <div class="confirm-title">清空全部数据</div>
+            <div class="confirm-msg" id="clearMsg">此操作不可恢复。</div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="clearCancelBtn">取消</button>
+                <button class="btn-ok btn-danger" id="clearOkBtn">确认清空</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 导出选择 弹层 ================= -->
+    <div class="modal-overlay" id="exportOverlay">
+        <div class="modal export-modal">
+            <div class="modal-head">
+                <span class="title" id="exportPanelTitle">选择要导出的卡片</span>
+                <button class="close" id="closeExportBtn" title="关闭">✕</button>
+            </div>
+
+            <div class="export-tools">
+                <!-- 筛选与批量操作同一行：筛选靠左，全选／清空／反选与计数整体靠右 -->
+                <span class="export-filters">
+                    <span class="io-field">
+                        <label class="pick-filter-label" for="exportFilterChapter">章节</label>
+                        <select class="pick-filter-select" id="exportFilterChapter">
+                            <option value="all">全部</option>
+                        </select>
+                    </span>
+                    <span class="io-field">
+                        <label class="pick-filter-label" for="exportFilterFav">收藏</label>
+                        <select class="pick-filter-select" id="exportFilterFav">
+                            <option value="all">全部</option>
+                            <option value="fav">仅收藏</option>
+                        </select>
+                    </span>
+                </span>
+                <span class="export-actions">
+                    <button class="btn-tiny" id="exportSelectAll">全选</button>
+                    <button class="btn-tiny" id="exportSelectNone">清空</button>
+                    <button class="btn-tiny" id="exportSelectInvert">反选</button>
+                    <span class="export-count">已选 <b id="exportCount">0</b> 张</span>
+                </span>
+            </div>
+
+            <div class="export-list" id="exportList"></div>
+
+            <div class="modal-foot">
+                <button class="btn-cancel" id="exportCancelBtn">取消</button>
+                <button class="btn-ok" id="exportConfirmBtn">导出</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- ================= 图片大图预览（答案里点图片打开） ================= -->
+    <div class="img-viewer" id="imgViewer">
+        <button type="button" class="img-viewer-close" id="imgViewerClose" title="关闭（Esc）">✕</button>
+        <img id="imgViewerImg" alt="图片预览">
+        <div class="img-viewer-bar">
+            <button type="button" id="imgViewerOut" title="缩小（键盘 -）">−</button>
+            <span class="zoom-val" id="imgViewerVal">100%</span>
+            <button type="button" id="imgViewerIn" title="放大（键盘 +）">＋</button>
+            <span class="vsep"></span>
+            <button type="button" class="txt" id="imgViewerFit" title="回到适应窗口的大小">适应窗口</button>
+            <button type="button" class="txt" id="imgViewerOne" title="按图片原始像素显示">1:1</button>
+        </div>
+    </div>
+
+    <!-- ================= 从 AI 对话导入 弹层 ================= -->
+    <div class="modal-overlay" id="aiImpOverlay">
+        <div class="modal export-modal">
+            <div class="modal-head">
+                <span class="title">从 AI 对话导入卡片</span>
+                <button class="close" id="closeAiImpBtn" title="关闭">✕</button>
+            </div>
+
+            <div class="export-tools">
+                <button class="btn-tiny" id="aiImpSelectAll">全选</button>
+                <button class="btn-tiny" id="aiImpSelectNone">清空</button>
+                <span class="export-count">已选 <b id="aiImpCount">0</b> 条</span>
+                <!-- label 与下拉框包成一组（.io-field），窄屏不被拆到两行 -->
+                <span class="io-field">
+                <label class="ai-imp-label" for="aiImpSubject">分类</label>
+                <select class="ai-imp-select" id="aiImpSubject">
+                    <option value="微观">微观</option>
+                    <option value="宏观">宏观</option>
+                </select>
+                </span>
+                <!-- 导入时可一并选章节，下拉项随上面的分类切换 -->
+                <span class="io-field">
+                <label class="ai-imp-label tight" for="aiImpChapter">章节</label>
+                <select class="ai-imp-select chapter" id="aiImpChapter">
+                    <option value="">不设章节</option>
+                </select>
+                </span>
+            </div>
+
+            <div class="export-list" id="aiImpList"></div>
+
+            <div class="modal-foot">
+                <span class="ai-imp-tip">一问一答算一张：题目取你的提问，答案取 AI 的回答；分类和章节设置见上</span>
+                <button class="btn-cancel" id="aiImpCancelBtn">取消</button>
+                <button class="btn-ok" id="aiImpConfirmBtn">导入</button>
+            </div>
+        </div>
+    </div>
+
+<script src="palette.config.js?v=20261110a"></script>
+<script src="project.config.js?v=20261110a"></script>
+<script src="mycards.config.js?v=20261110a"></script>
+<script src="data/mycards.js?v=20261110a"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="engine/render/common.js?v=20261110a"></script>
+<script src="engine/store.js?v=20261110a"></script>
+<script src="engine/ui.js?v=20261110a"></script>
+<script src="engine/filtermemory.js?v=20261110a"></script>
+<script src="engine/blobstore.js?v=20261110a"></script>
+<script src="engine/image-store.js?v=20261110a"></script>
+<script src="engine/imgctl/core.js?v=20261110a"></script>
+<script src="engine/mycards/model.js?v=20261110a"></script>
+<script src="engine/editor/core.js?v=20261110a"></script>
+<script src="nav.config.js?v=20261110a"></script>
+<script src="engine/section-nav.js?v=20261110a"></script>
+<script>if (window.KB && KB.SectionNav && window.MYCARDS_CONFIG) KB.SectionNav.mount({ current: MYCARDS_CONFIG.sectionNav });</script>
+<script src="engine/mycards/app.js?v=20261110a"></script>
+<script>KB.Store.ready().then(function () { KB.MyCards.mount(); KB.__mcMounted = true; });</script>
+<script src="ai.config.js?v=20261110a"></script>
+<script src="engine/ai/common.js?v=20261110a"></script>
+<script src="engine/ai/codec.js?v=20261110a"></script>
+<script src="engine/ai/storage.js?v=20261110a"></script>
+<script src="engine/ai/markdown.js?v=20261110a"></script>
+<script src="engine/ai/context.js?v=20261110a"></script>
+<script src="engine/ai/attach.js?v=20261110a"></script>
+<script src="engine/ai/nav.js?v=20261110a"></script>
+<script src="engine/ai/messages.js?v=20261110a"></script>
+<script src="engine/ai/stream.js?v=20261110a"></script>
+<script src="engine/ai/share.js?v=20261110a"></script>
+<script src="engine/ai/cards.js?v=20261110a"></script>
+<script src="engine/ai/core.js?v=20261110a"></script>
+<script>KB.AI.mount({ isCardsPage: true });</script>
+<script src="engine/top-btn.js?v=20261110a"></script>
+</body>
+</html>

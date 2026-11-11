@@ -1,0 +1,50 @@
+/* 返回顶部箭头 · 可选组件，两个文件一起引：
+   <link rel="stylesheet" href="ui/top-btn.css">  +  <script src="engine/top-btn.js"></script>
+   节点由脚本自己建，不引就不存在。
+
+   可调的就这几个变量，页面想改在 :root 或 body 上覆写即可：
+   --totop-size 箭头边长 / --totop-right 距右 / --totop-bottom 距下 / --totop-fg 线条色 /
+   --totop-ring 键盘聚焦时的描边色 / --totop-shadow 常态投影 /
+   --totop-shadow-hover 悬停投影。 */
+#toTop {
+  --totop-size: 38px;
+  --totop-right: 32px;
+  --totop-bottom: 104px;
+  /* 颜色四个变量在 tokens.css 的 --totop-* 里，跟主题一起变 */
+
+  position: fixed;
+  right: var(--totop-right);
+  bottom: var(--totop-bottom);
+  z-index: 890;
+  width: var(--totop-size);
+  height: var(--totop-size);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--totop-fg);
+  cursor: pointer;
+  line-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0);
+  filter: drop-shadow(var(--totop-shadow));
+  transition: opacity .25s ease, transform .25s ease, filter .15s ease, visibility 0s .25s;
+}
+
+#toTop svg { display: block; width: 100%; height: 100%; }
+
+#toTop.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity .25s ease, transform .25s ease, filter .15s ease, visibility 0s;
+}
+
+#toTop:hover { filter: drop-shadow(var(--totop-shadow-hover)); }
+#toTop:active { transform: translateY(1px); }
+
+#toTop:focus-visible {
+  outline: 3px solid var(--totop-ring);
+  outline-offset: 3px;
+  border-radius: 4px;
+}

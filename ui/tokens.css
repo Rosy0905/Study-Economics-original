@@ -1,0 +1,1455 @@
+/* 设计令牌：颜色、尺寸、排版。
+   子页统一一套绿主题，模块色只用在主页入口卡上，两者不混用。
+   三款预设通过 <body data-preset="..."> 覆盖变量，选择器里不出现具体色值。 */
+
+:root {
+  /* 页面底色与文字 */
+  --page-bg: #f0f7f0;
+  --page-fg: #1e3a2a;
+  --page-pad: 20px;
+  /* 子页与题库页共用这一条，答案册单独走 --ab-max；这里是引擎默认值。
+     项目要改宽度在自己的 theme/tokens.css 里覆盖，不要改这里。 */
+  --page-max: 1120px;
+  /* 抽查模式只放一张卡，收窄到 820：把视线收在中间一列，与页面本身多宽无关。 */
+  --single-max: 820px;
+
+  /* 页头 */
+  --header-bg: #d9edd9;
+  --header-pad: 18px 28px;
+  --header-shadow: 0 4px 12px rgba(60, 110, 60, 0.12);
+  --header-title: #1e4a2a;
+  --header-title-size: 24px;
+
+  /* 统计条 */
+  --stats-bg: #c4e0c4;
+  --stats-pad: 6px 18px;
+  --stats-fg: #1e3a2a;
+  --stats-num: #1f6b3a;
+
+  /* 页头导航：返回主页、答案册入口 */
+  --back-bg: #c4e0c4;
+  --back-fg: #1e4a2a;
+  --back-hover: #a8d0a8;
+  --back-shadow: 0 1px 3px rgba(60, 110, 60, 0.10);
+  --back-shadow-hover: 0 4px 12px rgba(60, 110, 60, 0.20);
+  --entry-fg: #3d6b46;
+  --entry-hover-bg: rgba(150, 195, 150, 0.30);
+  --entry-hover-fg: #1b4a2a;
+  --entry-active-bg: rgba(140, 185, 140, 0.42);
+  --entry-divider: rgba(70, 120, 75, 0.22);
+
+  /* 筛选栏 */
+  --filter-bg: #e6f3e6;
+  --filter-pad: 12px 20px;
+  --input-bg: #fafffa;
+  --input-border: #b3d9b3;
+  --input-focus: #6a9e6a;
+  --btn-soft-bg: #cfe2cf;
+  --btn-soft-hover: #b8d4b8;
+  --btn-soft-fg: #1e4a2a;
+  --filter-label: #1f4a2a;
+  --input-focus-ring: rgba(80, 150, 80, 0.2);
+  --btn-random-bg: #d4c49a;
+  --btn-random-hover: #c9b888;
+  --btn-random-fg: #3f3a1a;
+
+  /* 卡片 */
+  --card-bg: #ffffff;
+  --card-border: #8fbe8f;
+  --card-border-w: 6px;
+  --card-radius: 18px;
+  --card-shadow: 0 4px 14px rgba(60, 100, 60, 0.08);
+  --card-shadow-hover: 0 8px 24px rgba(50, 100, 50, 0.13);
+  /* 抽查模式只剩一张卡，投影加重、左边色条加粗，把注意力压在这一张上 */
+  --card-shadow-single: 0 8px 32px rgba(60, 100, 60, 0.18);
+  --card-border-w-single: 8px;
+  --card-pad-x: 22px;
+  --note-area-pad-b: 18px;
+
+  /* 卡片头部 */
+  --tag-bg: #dcebd9;
+  --tag-fg: #1a4a2a;
+  --tag-blue-bg: #d9e6f7;
+  --tag-blue-fg: #1b4b7e;
+  --tag-sand-bg: #e8e0cc;
+  --tag-sand-fg: #6a5620;
+  --note-card-bg: #fafbff;
+  --note-card-border: #4f8a9e;
+  --note-card-fg: #16394a;
+  --note-tag-bg: #d6e8f0;
+  --note-tag-fg: #14405a;
+
+  /* 说明卡展开后那半截：卡片、标签与公式色取自 3 页 knowledge 与 7 页 note-type，两页逐值相同。
+     图占位两项按正常卡绿色的明暗配成对应蓝。只给常态用，收藏态走下面 --fav-* 那一套。 */
+  --note-qid-fg: #14405a;
+  --note-hint-fg: #4a7f99;
+  --note-answer-bg: #f3f9fd;
+  --note-answer-fg: #2b2b2b;
+  --note-strong-fg: #14405a;
+  --note-formula-fg: #12303f;
+  --note-formula-bg: #e7f1f8;
+  --note-fig-bg: #eaf2f8;
+  --note-fig-fg: #4e6b82;
+  --label-gap: 10px;
+  --qid-fg: #1f5a2f;
+  --qid-size: 15px;
+  --hasimg-bg: #d9c8b0;
+  --hasimg-fg: #5a3f1a;
+
+  /* 题目 */
+  --q-fg: #1c3322;
+  --q-table-size: 13px;
+  --q-size: 15.5px;
+  --q-table-scroll: #d6d6d6;
+  --q-line: 1.7;
+  --q-pad-b: 12px;
+  --hint-fg: #5f8a5f;
+
+  /* 答案区 */
+  --answer-bg: #f3faf3;
+  /* 正文色比同色相最深那档浅一层：最深的一档压在浅绿底上，字和底会糊在一起。 */
+  --answer-fg: #24382a;
+  --answer-radius: 14px;
+  --answer-pad: 18px 22px;
+  --answer-size: 14.8px;
+  --answer-line: 1.9;
+  /* 段间距 0.45em：再小，字数多的答案会挤成一整块。 */
+  --answer-p-gap: 0.45em;
+  --answer-indent: 2em;
+
+  /* 公式块 */
+  /* 公式块底色只留两个源：有底款一个、收藏暖底一个。
+     卡片答案区、收藏态、答案册三处都引用它们，换色只改这里。
+     去掉底色（plain / latex）由预设块把 --formula-bg 改成 transparent。 */
+  --formula-tint: #eaf5ea;
+  --formula-tint-fav: #f6eddd;
+  --formula-bg: var(--formula-tint);
+  --formula-fg: #1c4a3a;
+  --formula-radius: 6px;
+  --formula-pad: 2px 10px;
+  --formula-indent: 2em;
+  --formula-align: left;
+  /* 公式块行高单独 1.75：跟着正文 1.9 走，色块会比字高出一圈，
+     看着像公式缩在色块里。字号不在这里定，跟正文走。 */
+  --formula-line: 1.75;
+
+  /* 详解标题 */
+  --detail-rule: 1px dashed #b9d8b9;
+  --detail-margin: 18px 0 6px 0;
+  --detail-pad: 8px 0 0 0;
+
+  /* 图占位：数值取自答案册 p.fig */
+  --fig-bg: #eaf3e6;
+  --fig-fg: #52705d;
+  --fig-size: 12.5px;
+  --fig-radius: 7px;
+  --fig-pad: 5px 11px;
+
+  /* 小问标题 */
+  --sub-weight: 600;
+  --sub-indent: 2em;   /* 与正文平齐，只靠加粗分层。答案册原值是 1em，那页还有 ① 二级序号才需要错开 */
+
+  /* 收藏态 */
+  --fav-border: #d4a24e;
+  --fav-bg: #fdfbf6;
+  --fav-answer-bg: #faf6ea;
+  --fav-answer-fg: #2b2b2b;
+  --fav-formula-bg: var(--formula-tint-fav);
+  --fav-tag-bg: #f2e8ce;
+  --fav-tag-fg: #5a4a1a;
+  --fav-detail-rule: 1px dashed #e8d9b0;
+  --fav-fig-bg: #f3ecdc;
+  --fav-fig-fg: #5a4a1a;
+  --fav-table-head-bg: #f2e7cf;
+  --fav-table-bg: #faf6ea;
+  --fav-table-fg: #2b2b2b;
+  --fav-table-border: #ddc79c;
+  --fav-table-cell-border: #ddc79c;
+  --fav-table-head-fg: #2b2b2b;
+  --fav-table-rh-bg: #f8f1e2;
+  --fav-hint-fg: #bd9333;
+  --fav-qid-fg: #8a6a1a;
+  --fav-strong-fg: #1a1a1a;
+  --fav-btn-fg: #b8a06a;
+
+  /* 答案册：页头题条、卷别切换、条目与答案区。
+     页头底与年份条底直接借 --header-bg / --filter-bg，与子页同色不另设。
+     宽度比子页窄一档：整页是单列长文，行太长读着累；题号面板按这条宽度
+     算出左侧留白，不留白时收成小按钮。 */
+  --ab-max: 1000px;
+
+  /* 页头第一行与第二行之间的细线 */
+  --ab-row-rule: rgba(110, 165, 115, 0.28);
+
+  /* 页头工具：搜索框与只看收藏。绿是常态，收藏那枚转暖色 */
+  --ab-search-bg: #fafffa;
+  --ab-search-border: #b3d9b3;
+  --ab-search-fg: #1e3a2a;
+  --ab-search-ph: #86a98c;
+  --ab-search-focus: #6a9e6a;
+  --ab-search-ring: rgba(80, 150, 80, 0.2);
+  --ab-search-btn-bg: #e2f0e2;
+  --ab-search-btn-fg: #4d7a58;
+  --ab-fav-hover-bg: #f2fbf2;
+  --ab-fav-btn-bg: #fdf7e8;
+  --ab-fav-btn-fg: #8a6a1a;
+  --ab-hl-bg: #fff3c4;
+  --ab-hl-fg: #6b5010;
+  /* 搜索结果条目：hover 是很淡的一层绿，回到结果时刚点过的那条转暖并描一圈 */
+  --ab-sr-hover: #f1f9f1;
+  --ab-sr-fg: #2c4a36;
+  --ab-sr-no-bg: #eef7ee;
+  --ab-sr-no-fg: #4d7a58;
+  --ab-sr-tip: #8aa992;
+  /* 搜索页那两张白卡（关键词条、回结果条）的字色 */
+  --ab-sh-fg: #4a6a52;
+  --ab-shadow-menu: 0 8px 22px rgba(35, 75, 40, .18), 0 0 0 1px rgba(90, 140, 95, .1);
+  --ab-shadow-paper: 0 2px 8px rgba(60, 110, 60, .07);
+  --ab-shadow-flash: 0 4px 18px rgba(180, 140, 60, .28);
+  --ab-shadow-filter: 0 3px 14px rgba(60, 110, 60, .14);
+  --ab-shadow-nav: 0 6px 24px rgba(40, 90, 50, .28);
+  --ab-shadow-focus: 0 0 0 2px rgba(94, 201, 154, 0.16);
+  --ab-sh-strong: #1e4a2a;
+  --ab-sh-link: #23603a;
+  --ab-sr-hit-bg: #fff8e6;
+  --ab-sr-hit-line: #e8c877;
+  /* 搜索范围说明：档位不是「全部」时才出现 */
+  --ab-scope-fg: #7b9a80;
+  --ab-scope-strong: #23603a;
+  --ab-scope-rule: rgba(110, 165, 115, 0.35);
+  /* 卷首「答案录入中」提示条 */
+  --ab-rec-bg: #f3f9f0;
+  --ab-rec-border: #dcecd6;
+  --ab-rec-fg: #4a6a52;
+  --ab-rec-strong: #2f5d3f;
+  --ab-rec-num: #1f6b3a;
+  /* 未录入的题：整块参考答案区浅化，只剩一行说明 */
+  --ab-ans-empty-bg: #fafcf8;
+  --ab-ans-empty-border: #eef3ea;
+  --ab-ans-empty-edge: #d8e5d2;
+  --ab-ans-empty-label-bg: #eef3ea;
+  --ab-ans-empty-label-fg: #7f9a84;
+  --ab-wait-fg: #8aa08f;
+  /* 空态 */
+  --ab-empty-fg: #6a8a70;
+  --ab-empty-sub: #8aa692;
+
+  --ab-sub-fg: #55805f;
+  --ab-crumb: #6a8a70;
+  --ab-meta: #5f7a63;
+  --ab-crumb-fg: #6a8a70;
+  --ab-part-fg: #1f4a2a;
+  --ab-part-note: #6a8a70;
+  --ab-item-shadow: 0 2px 8px rgba(60, 110, 60, 0.06);
+  --ab-no-bg: #e3f0e3;
+  --ab-no-fg: #1f6b3a;
+  --ab-stem-size: 15px;
+  --ab-stem-line: 1.8;
+  --ab-ans-bg: #f2f8ef;
+  --ab-ans-border: #e4efe0;
+  --ab-ans-edge: #a9cfa9;
+  --ab-ans-size: 14.5px;
+  --ab-ans-line: 1.9;
+  --ab-ans-label-bg: #e2efdd;
+  --ab-ans-label-fg: #4a7a55;
+  --ab-head-fg: #1c4a2c;
+  --ab-tip-fg: #5b7263;
+  --ab-tip-b: #3f6b4d;
+  --ab-fm-cn: #2c4a35;
+  /* 答案册的公式块底色与卡片那一条不同：原版答案册是 #e6f1e3，比卡片的 #eaf5ea 实一档。
+     单独一条变量，改卡片预设不牵连这里。 */
+  --ab-formula-bg: #e6f1e3;
+  --ab-font-math: 'Times New Roman', 'Cambria Math', 'SimSun', 'Songti SC', serif;
+  /* 题干里表格的字号：答案册原版 12.5／1.65，比卡片（13／1.6）小半档 */
+  --ab-stem-table-size: 12.5px;
+  --ab-stem-table-line: 1.65;
+  --ab-table-strong: #2f5c3e;
+  --ab-src-bg: #f6faf4;
+  --ab-src-border: #cde1c7;
+  --ab-src-fg: #5f7a65;
+  --ab-yb-btn-bg: #cfe6cf;
+  --ab-yb-btn-hover: #c2dfc2;
+  --ab-yb-btn-fg: #14401f;
+  --ab-year-fg: #23502f;
+  --ab-year-hover: #d3e8d3;
+  --ab-menu-hover: #eff8ef;
+  --ab-menu-on-bg: #e3f1e3;
+  --ab-menu-on-fg: #10381c;
+  --ab-year-on-bg: #1f6b3a;
+  --ab-year-on-fg: #ffffff;
+  --ab-nav-type-fg: #4d7a58;
+  --ab-nav-num-bg: #f2faf2;
+  --ab-nav-num-hover: #dff0df;
+  --ab-nav-shadow: 0 2px 10px rgba(60, 110, 60, 0.10);
+  --ab-nav-fab-shadow: 0 2px 10px rgba(60, 110, 60, 0.18);
+
+  /* 卡片动作按钮 */
+  --card-action-fg: #3f6a3f;
+  --card-action-hover-bg: #e6f0e6;
+  --card-action-active-bg: #d8ead8;
+  --note-btn-fg: #4f7a4f;
+  --note-btn-active-fg: #2b6b2b;
+
+  /* 答案册正文表格：原值，只给答案册用。 */
+  --table-size: 12.5px;
+  --table-bg: #f6faf4;
+  --table-fg: #33503d;
+  --table-border: #b3d0aa;
+  --table-cell-border: #c3dcbb;
+  --table-head-bg: #e9f3e4;
+  --table-head-fg: #3f6b4d;
+  --table-rh-bg: #eef6ea;
+  --table-strong-fg: #2f5c3e;
+
+  /* 卡片表格（普通子页与真题页）：数值取自 7 页 .matrix。
+     题干与答案区共用这一组尺寸，颜色各走各的。 */
+  --card-table-size: 13.5px;
+  --card-table-line: 1.6;
+  --card-table-pad: 5px 16px;
+  --card-table-bg: #ffffff;
+  --card-table-fg: #1a3322;
+  --card-table-border: #b9d6b9;
+  --card-table-cell-border: #b9d6b9;
+  --card-table-head-bg: #e6f3e6;
+  --card-table-head-fg: #1a3322;
+  --card-table-rh-bg: #f4faf4;
+  --card-table-strong-fg: #2f5c3e;
+
+  /* 空状态与页脚 */
+  --empty-bg: #e6f3e6;
+  --empty-fg: #4f7a4f;
+  --footer-fg: #8aaa8a;
+  --footer-rule: #cce0cc;
+
+  /* 抽查模式条 */
+  --single-bar-bg: #f5efe0;
+  --single-bar-border: #d4a24e;
+  --single-nav-fg: #7a5a2a;
+  --single-nav-hover: #e8ddd0;
+  --single-badge-bg: #e8ddd0;
+  --single-badge-fg: #5a4a2a;
+  --single-hint-fg: #8a7a5a;
+  --single-exit-fg: #8a5a4a;
+  --single-exit-hover: #e8d5d0;
+
+  /* 自测：三档颜色，绿＝会了、橙＝模糊、红＝忘了 */
+  --st-switch-track: #d8e6d8;
+  --st-switch-on: #5ec99a;
+  --st-switch-fg: #3d6b46;
+  --st-chip-bg: #ffffff;
+  --st-chip-border: #e6f0e6;
+  --st-chip-fg: #4a6a52;
+  --st-chip-shadow: 0 2px 8px rgba(60, 100, 60, 0.07);
+  --st-chip-hover-border: #9ccfae;
+  --st-chip-sel-border: #5ec99a;
+  --st-chip-sel-bg: #eefaf3;
+  --st-chip-sel-ring: rgba(94, 201, 154, 0.18);
+  --st-ok-fg: #2b7a2b;
+  --st-meh-fg: #c98a2b;
+  --st-no-fg: #b85050;
+  --st-left-fg: #5f7f8f;
+  --st-ok-bar: #5ec99a;
+  --st-meh-bar: #e0b152;
+  --st-no-bar: #cf6b6b;
+  --st-rate-bg: #ffffff;
+  --st-rate-border: #e2ece5;
+  --st-rate-fg: #5f8569;
+  --st-rate-hover-bg: #eef8f2;
+  --st-rate-ok-sel: #e6f6ed;
+  --st-rate-ok-sel-border: #5ec99a;
+  --st-rate-ok-sel-fg: #237a4c;
+  --st-rate-meh-sel: #fbf1de;
+  --st-rate-meh-sel-border: #dfae4e;
+  --st-rate-meh-sel-fg: #8a6420;
+  --st-rate-no-sel: #fbe9e9;
+  --st-rate-no-sel-border: #d98a8a;
+  --st-rate-no-sel-fg: #9c4444;
+  --st-cover-bg: rgba(243, 250, 243, 0.62);
+  --st-cover-border: #b3ddc3;
+  /* 收藏态的遮罩：整卡转暖时跟着换，否则浅绿虚线框会在米黄底上很跳 */
+  --fav-cover-bg: rgba(250, 246, 234, 0.62);
+  --fav-cover-border: #e0cb9e;
+  --st-dot-ok: #a8dcc2;
+  --st-dot-meh: #e6cd97;
+  --st-dot-no: #e8b2b2;
+  --st-meh-hover-bg: #fdf6e9;
+  --st-no-hover-bg: #fdeeee;
+  --st-track-dot: #ffffff;
+  --st-track-dot-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+
+  /* 笔记 */
+  --note-bg: #f8fcf8;
+  --note-border: #c2ddc2;
+  --note-fg: #1c3322;
+  --note-focus: #6a9e6a;
+  --note-focus-ring: rgba(80, 150, 80, 0.15);
+  --note-placeholder: #8aaa8a;
+  --fav-note-bg: #fdfaf1;
+  --fav-note-border: #e8d9b0;
+  --fav-note-focus: #d4a24e;
+  --fav-note-fg: #4a3a1a;
+  --fav-note-placeholder: #b8a478;
+  --fav-note-focus-ring: rgba(212, 162, 78, 0.16);
+
+  /* 编辑态：虚线框与题目下的线 */
+  --edit-line: #6a9e9e;
+  --fav-edit-line: #b8912e;
+  --fav-edit-mark-fg: #c4b18a;
+  /* 编辑框里的语法标记：成对星号染淡，让人一眼看出哪段会加粗 */
+  --edit-mark-fg: #a8bdb0;
+  --edit-cancel-fg: #8a4a4a;
+  --edit-cancel-hover-bg: #f0e0e0;
+
+  /* 确认弹窗：骨架项一律引用公共弹层变量（--dlg-*），
+     改公共骨架时确认、导出、微信三个弹层一起变；
+     只把按钮渐变这组特征色留在自己名下 */
+  --confirm-mask: var(--dlg-mask);
+  --confirm-bg: var(--dlg-bg);
+  --confirm-title-fg: var(--dlg-title);
+  --confirm-msg-fg: var(--dlg-body);
+  --confirm-msg-strong: var(--dlg-strong);
+  --confirm-cancel-bg: var(--dlg-cancel-bg);
+  --confirm-cancel-fg: var(--dlg-cancel-ink);
+  --confirm-cancel-hover: var(--dlg-cancel-hover);
+  --confirm-ok-from: #5ec99a;
+  --confirm-ok-to: #3fa87a;
+  --confirm-danger-from: #f08a72;
+  --confirm-danger-to: #e05a4a;
+  --confirm-ok-fg: var(--dlg-btn-ink);
+
+  /* 轻提示 */
+  --toast-bg: #2a4a2a;
+  --toast-fg: #f0faf0;
+  --toast-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  /* 主页款：亮绿实心、白字，圆角与过渡都比子页紧一档 */
+  --home-toast-bg: #45b98c;
+  --home-toast-fg: #ffffff;
+  --home-toast-shadow: 0 10px 26px rgba(69, 185, 140, 0.34);
+  --home-toast-radius: 30px;
+  --home-toast-bottom: 34px;
+  --home-toast-shift: 20px;
+  --home-toast-z: 2000;
+  --home-toast-maxw: 86vw;
+  --home-toast-font: 13px;
+  --home-toast-weight: 600;
+  --home-toast-track: 0.5px;
+  --home-toast-pad: 11px 24px;
+  --home-toast-dur: 0.25s;
+
+  /* 滚动条 */
+  --scroll-track: #dce8dc;
+  --scroll-thumb: #8fbe8f;
+  --scroll-thumb-hover: #6f9e6f;
+
+  /* 圆角与间距 */
+  --radius-pill: 40px;
+  --radius-btn: 30px;
+  --radius-sm: 10px;
+  --gap-grid: 18px;
+  --gap-bar: 10px;
+
+  /* 字体 */
+  --font-body: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+  --font-math: 'Times New Roman', 'Cambria Math', serif;
+}
+
+/* 答案区底色三款一律保留，差别只在公式那一行。 */
+
+/* ---- 原版款：答案区浅绿底、公式浅绿块 ---- */
+body[data-preset='tinted'] {
+  --answer-bg: #f3faf3;
+  --formula-bg: var(--formula-tint);
+}
+
+/* ---- 公式无块款：答案区底色不变，公式去掉色块、只居中 ---- */
+body[data-preset='plain'] {
+  --answer-bg: #f3faf3;
+  --formula-bg: transparent;
+  --fav-formula-bg: transparent;
+  --formula-fg: inherit;
+  --formula-indent: 0;
+  --formula-pad: 0;
+  --formula-align: center;
+}
+
+/* ---- LaTeX 款：答案区底色不变，公式交给 KaTeX 排版，不套色块 ---- */
+body[data-preset='latex'] {
+  --answer-bg: #f3faf3;
+  --formula-bg: transparent;
+  --fav-formula-bg: transparent;
+  --formula-fg: inherit;
+  --formula-indent: 0;
+  --formula-pad: 0;
+  --formula-align: center;
+}
+
+/* 收藏态在三款下都要压回暖色，变量在 tokens 里已定义，此处无需分支 */
+
+/* ---- 富文本控件与浮层（engine/richnote.js 注入的样式从这里取色）----
+   工具栏、公式/表格/清空按钮、图片尺寸条、看图浮层、表格弹窗、笔记内容里的
+   代码块与表格线、收藏态暖色。基础值即当前视觉；站点想换控件色调，覆盖这里即可。
+   遮罩上的白色按钮与纯黑阴影是中性色，不随主题走，仍写在 richnote.js 内。 */
+:root {
+  /* 工具栏 */
+  --rte-btn: #dcebd9;
+  --rte-btn-hover: #cfead0;
+  --rte-btn-ink: #1e4a2a;
+  --rte-btn-on: #a8c8a8;
+  --rte-btn-on-ink: #14361f;
+  --rte-save-ink: #1a3a1a;
+  --rte-save-hover: #94b894;
+  --rte-bar-shadow: rgba(40,110,60,.24);
+  --rte-bar-shadow-soft: rgba(40,110,60,.12);
+  /* 功能按钮（各自成色） */
+  --rte-fmt: #e8e8e8;
+  --rte-fmt-hover: #d6d6d6;
+  --rte-fmt-ink: #2f4a2f;
+  --rte-imgb: #d4d9c4;
+  --rte-imgb-hover: #c4cdb0;
+  --rte-tblb: #cfe0e8;
+  --rte-tblb-hover: #b8d4e0;
+  --rte-tblb-ink: #1e4a5a;
+  --rte-fmlb: #e2dcef;
+  --rte-fmlb-hover: #d2c9e8;
+  --rte-fmlb-ink: #3d2a6a;
+  --rte-clear: #e6d6d6;
+  --rte-clear-hover: #dcc4c4;
+  --rte-clear-ink: #6a3a3a;
+  --rte-fav-on: #e6d5a2;
+  --rte-fav-on-ink: #4a3a0a;
+  /* 通用线与强调 */
+  --rte-line: #c2ddc2;
+  --rte-accent: #4f8a4f;
+  --rte-focus: #6a9e6a;
+  --rte-focus-ring: rgba(80,150,80,.16);
+  --rte-link: #2f7d55;
+  /* 笔记内容 */
+  --rte-code-bg: #e8f3e8;
+  --rte-pre-bg: #eef6ef;
+  --rte-pre-line: #dceade;
+  --rte-quote-line: #b3ddc3;
+  --rte-head-ink: #1a3322;
+  --rte-placeholder: #8aaa8a;
+  /* 图片尺寸条 */
+  --rte-ctl-bg: #edf5ed;
+  --rte-ctl-ink: #2a5a2a;
+  --rte-ctl-dim: #5b7a5b;
+  --rte-reset: #dcecd9;
+  --rte-apply: #6fbf8f;
+  --rte-apply-hover: #5bae7d;
+  --rte-apply-shadow: rgba(80,160,110,.26);
+  --rte-mode-shadow: rgba(60,110,60,.18);
+  --rte-sel-ring: rgba(79,138,79,.28);
+  --rte-sel-ring-0: rgba(79,138,79,0);
+  --rte-sel-ring-fav: rgba(212,162,78,.35);
+  /* 笔记正文与弹层纸面 */
+  --rte-ink: #000;
+  --rte-ink-forced: #1a1a1a;
+  --rte-paper: #fff;
+  /* 看图浮层 */
+  --viewer-overlay: rgba(14,32,22,.86);
+  --viewer-btn: #dff0df;
+  --viewer-btn-hover: #c8e8cb;
+  --viewer-btn-active: #bcdfc0;
+  --viewer-ink: #1f5a2f;
+  --viewer-txt: #cfe8d2;
+  --viewer-txt-hover: #b7dcbd;
+  --viewer-txt-active: #a8d0af;
+  --viewer-sep: #cfe0cf;
+  --viewer-shadow: rgba(40,110,60,.22);
+  --viewer-shadow-soft: rgba(40,110,60,.10);
+  --viewer-inset: rgba(30,80,50,.10);
+  --viewer-img-shadow: 0 18px 50px rgba(0,0,0,.45);
+  --viewer-close-line: rgba(255,255,255,.5);
+  --viewer-close-bg: rgba(255,255,255,.16);
+  --viewer-close-bg-hover: rgba(255,255,255,.28);
+  --viewer-bar-bg: rgba(255,255,255,.94);
+  --viewer-bar-shadow: 0 6px 20px rgba(0,0,0,.28);
+  --tip-bg: rgba(30,58,42,.92);   /* 操作提示气泡（深绿底白字） */
+  /* 表格弹窗 */
+  --modal-overlay: rgba(14,32,22,.42);
+  --modal-ink: #1e3a2a;
+  --modal-label: #3a5a3a;
+  --modal-dim: #7a957a;
+  --modal-ok: #5ec99a;
+  --modal-no: #eef4ee;
+  --modal-no-ink: #5a7a68;
+  --modal-box-shadow: 0 16px 44px rgba(0,0,0,.22);
+  /* 收藏暖色（笔记内容跟着卡片变暖） */
+  --rte-fav-code: #f1e7cd;
+  --rte-fav-pre: #f6eddd;
+  --rte-fav-line: #e8d9b0;
+  --rte-fav-placeholder: #b8a478;
+
+  /* ==================== 主页 ==================== */
+  --home-bg: #f2f8f3;
+  --home-ink: #1e3a2a;
+  /* 主页独立宽度 1100px；子页 / 题库走全站 --page-max，答案册走 --ab-max，互不影响。 */
+  --home-wrap-max: 1100px;
+  /* 顶部横幅 */
+  --home-head-bg: linear-gradient(150deg, #eefaf3 0%, #e2f4e9 60%, #ddf2ea 100%);
+  /* 彩虹线默认值仅兜底：运行时由 home.js 按模块实际用色动态拼渐变覆盖 */
+  --home-head-line: linear-gradient(90deg, #7fd1b0, #8fbcec, #ebcb86, #ef9fc0, #7bd0dd, #a99eea, #f0a288, #c096dd);
+  --home-head-border: #e4f2e9;
+  --home-head-title: #1b4a2b;
+  --home-head-sub: #6a8f76;
+  --home-head-shadow: 0 6px 18px rgba(70, 120, 90, .10), inset 0 1px 0 rgba(255, 255, 255, .85);
+  --home-search-bg: rgba(255, 255, 255, .42);
+  --home-search-line: rgba(63, 138, 99, .26);
+  --home-search-ink: #35795a;
+  --home-search-shadow: 0 2px 10px rgba(70, 120, 90, .09);
+  --home-search-hover-bg: rgba(255, 255, 255, .17);
+  --home-search-hover-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .58), 0 3px 13px rgba(70, 120, 90, .15);
+  --home-search-hover-line: rgba(63, 138, 99, .32);
+  --home-search-hover-ink: #1f5d41;
+  --home-search-ring: rgba(88, 150, 116, .42);
+  /* 模块卡（每张卡的主色 --c/--c2/--soft 由配置按序注入，不在这里定义） */
+  --home-mod-bg: #fff;
+  --home-mod-line: #e8f2ec;
+  --home-mod-title: #1e4a2a;
+  --home-mod-desc: #75907c;
+  --home-mod-shadow: 0 4px 14px rgba(70, 115, 90, .07);
+  --home-mod-shadow-hover: 0 12px 28px rgba(70, 115, 90, .14);
+  --home-mod-foot-dash: #e2efe7;
+  /* 我的卡片通栏：白底 + 青蓝虚线 + 左侧青蓝竖条
+     边框整条是变量：粗细、虚实、颜色都在一处改，如 1px dashed / 2px solid */
+  --home-mine-bg: #fff;
+  --home-mine-border: 1px dashed #cfe3d7;
+  --home-mine-border-hover: 1px dashed #b9d8c4;
+  --home-mine-c: #5B8FA8;
+  --home-mine-c2: #8FBBD0;
+  --home-mine-ic-bg: #EDF4F8;
+  --home-mine-title: #1e4a2a;
+  --home-mine-desc: #75907c;
+  --home-mine-go: #4E86A2;
+  /* 学习进度条（米黄虚线框，虚线样式整条可改） */
+  --home-note-bg: #fdf9ee;
+  --home-note-border: 2px dashed #d4c49a;
+  --home-note-lb: #7a5a2a;
+  --home-note-input-bg: #fffdf6;
+  --home-note-input-line: #e8ddc0;
+  --home-note-input-ink: #3f3a1a;
+  --home-note-placeholder: #c4b48d;
+  --home-note-focus: #d4a24e;
+  --home-note-focus-ring: rgba(212, 162, 78, .15);
+  /* 页脚 */
+  --home-foot-ink: #96b3a2;
+  /* 整页滚动条（主页比子页宽一档） */
+  --home-scroll-track: #e0eee5;
+  --home-scroll-thumb: #9ccfb4;
+  /* 学习进度卡片弹层 */
+  --home-prog-overlay: rgba(28, 48, 36, .34);
+  --home-prog-card-bg: #fdf9ee;
+  --home-prog-card-w: 620px;
+  --home-prog-card-shadow: 0 24px 60px rgba(25, 60, 42, .20);
+  --home-prog-card-line: #d4a24e;
+  --home-prog-title: #7a5a2a;
+  --home-prog-date: #b0a184;
+  --home-prog-btn-bg: #fbf1d8;
+  --home-prog-btn-line: #ecd9a8;
+  --home-prog-btn-ink: #8b6c2e;
+  --home-prog-btn-hover: #f6e6c2;
+  --home-prog-line: #dceadf;
+  --home-prog-cnt-saved: #6aa87f;
+
+  /* 朗读（TTS）控件：青绿系，与站点主色同族 */
+  --home-tts-btn-bg: #ffffff;
+  --home-tts-btn-line: #cbe6d8;
+  --home-tts-btn-bg-hover: #f3fbf7;
+  --home-tts-btn-line-hover: #8fd4b0;
+  --home-tts-ink: #3d8f6e;
+  --home-tts-live-bg: #eaf8f2;
+  --home-tts-live-line: #7fc9a8;
+  --home-tts-pause-bg: #fdf7e6;
+  --home-tts-pause-line: #e5c882;
+  --home-tts-pause-ink: #b8891f;
+  --home-tts-glow: rgba(63, 174, 140, .18);
+  --home-tts-pulse: rgba(63, 174, 140, .30);
+  --home-tts-pulse-end: rgba(63, 174, 140, 0);
+  --home-tts-track-a: #a9e0c6;
+  --home-tts-track-b: #d8ecdf;
+  --home-tts-thumb-bg: #ffffff;
+  --home-tts-thumb-shadow: rgba(60, 130, 100, .28);
+  --home-tts-range-w: 84px;
+
+  /* 学习进度卡片按钮四态 */
+  --home-prog-tts-bg: #f7dfae;
+  --home-prog-tts-line: #d4a24e;
+  --home-prog-tts-ink: #7a5a2a;
+  --home-prog-danger-bg: #fbe4d9;
+  --home-prog-danger-line: #e3ab8e;
+  --home-prog-danger-ink: #b1502e;
+  --home-prog-done-bg: #e2f4e8;
+  --home-prog-done-line: #9ccfa9;
+  --home-prog-done-ink: #3d7d51;
+
+  /* 清除数据（花瓣 + 金色圆钮） */
+  --home-clear-btn-w: 46px;
+  --home-clear-petal-w: 34px;
+  --home-clear-petal-h: 48px;
+  --home-clear-dist: 56px;
+  --home-clear-btn-bg: #ffffff;
+  --home-clear-line: #f3d27c;
+  --home-clear-ink: #b8891f;
+  --home-clear-ring: rgba(245, 214, 122, .20);
+  --home-clear-ring-hover: rgba(245, 214, 122, .28);
+  --home-clear-shadow: rgba(212, 162, 78, .16);
+  --home-clear-shadow-hover: rgba(212, 162, 78, .20);
+  --home-clear-check-ink: #2fa27a;
+  --home-clear-check-line: #8fd4b0;
+  --home-clear-check-ring: rgba(143, 212, 176, .22);
+  --home-clear-check-shadow: rgba(47, 162, 122, .18);
+  --home-clear-check-glow: rgba(143, 212, 176, .25);
+  --home-clear-petal-shadow: rgba(90, 140, 115, .12);
+  --home-clear-petal-shadow-sel: rgba(90, 140, 115, .18);
+  /* 花瓣面上的两处固定色：未选中时的渐变上半截、选中后的描边与序号 */
+  --home-clear-petal-sheen: #ffffff;
+  --home-clear-petal-sel-line: #ffffff;
+  --home-clear-petal-sel-ink: #ffffff;
+
+  /* 弹层公共骨架：确认、清除、导出、微信分段复制四个弹层共用这一套。
+     底色、标题、遮罩、取消键、按钮文字改一次四处一起变；
+     只有真不一样的地方才各自覆盖（微信的遮罩更深、阴影向上弹，
+     用它的 --wx-overlay / --wx-box-shadow）。
+     各弹层的特征色另立前缀：--confirm-* 确认键渐变、
+     --clear-confirm-* 橘红确认键与警告、--export-* 选项条、
+     --wx-* 段列表与复制按钮。 */
+  --dlg-bg: #ffffff;
+  --dlg-title: #1e4a2a;
+  --dlg-desc: #75907c;
+  --dlg-body: #4a6a58;
+  --dlg-strong: #2e4a3a;
+  --dlg-mask: rgba(28, 48, 36, .38);
+  --dlg-shadow: 0 24px 60px rgba(25, 60, 42, .24);
+  --dlg-cancel-bg: #eef6f1;
+  --dlg-cancel-ink: #587a68;
+  --dlg-cancel-hover: #e4f0e9;
+  --dlg-btn-ink: #ffffff;
+
+  /* 清除确认弹层 */
+  --clear-confirm-list-bg: #f7fcf9;
+  --clear-confirm-list-line: #e5f2ea;
+  --clear-confirm-list-ink: #35603f;
+  --clear-confirm-warn: #d4816a;
+  --clear-confirm-ok-bg: linear-gradient(135deg, #f3a98c, #e57c62);
+  --clear-confirm-ok-shadow: rgba(229, 124, 98, .28);
+
+  /* 导入导出（蓝色同步钮 + 上下两个小球） */
+  --home-sync-btn-w: 46px;
+  --home-sync-orb-size: 40px;
+  --home-sync-orb-dist: 56px;
+  --home-sync-bg: #ffffff;
+  --home-sync-line: #a8cfe8;
+  --home-sync-ink: #2e6a99;
+  --home-sync-ring: rgba(168, 207, 232, .20);
+  --home-sync-ring-hover: rgba(168, 207, 232, .28);
+  --home-sync-shadow: rgba(79, 148, 196, .16);
+  --home-sync-shadow-hover: rgba(79, 148, 196, .20);
+  --home-sync-open-bg: #eaf4fc;
+  --home-sync-open-line: #8bbde0;
+  --home-sync-dim: .15;
+  /* 导入球（粉）与导出球（紫） */
+  --home-sync-import-line: #e8a8c8;
+  --home-sync-import-ink: #a85a7a;
+  --home-sync-import-soft: #fceef4;
+  --home-sync-export-line: #b89ee0;
+  --home-sync-export-ink: #6a4a9a;
+  --home-sync-export-soft: #f0eaf8;
+  --home-sync-orb-sheen: #ffffff;
+  --home-sync-orb-shadow: rgba(90, 140, 115, .14);
+  --home-sync-orb-shadow-hover: rgba(90, 140, 115, .22);
+
+  /* 导出选择弹层 */
+  --export-box-w: min(92vw, 400px);
+  --export-opt-bg: #f9fdfb;
+  --export-opt-line: #e2f0e8;
+  --export-opt-line-hover: #b9e2cd;
+  --export-opt-bg-hover: #f4fbf7;
+  --export-opt-bg-off: #f7faf8;
+  --export-opt-bg-active: #eef7f2;
+  --export-opt-line-active: #b9e2cd;
+  --export-opt-title: #1e4a2a;
+  --export-opt-desc: #8aaa95;
+  --export-tick-bg: #ffffff;
+  --export-tick-line: #c8ded2;
+  --export-tick-on: #3fa87a;
+  --export-tick-glyph: #ffffff;
+  --export-badge-bg: #e8f7f0;
+  --export-badge-ink: #3fa87a;
+  --export-size-ink: #7a9a88;
+  --export-size-strong: #3d8f6e;
+  --export-size-alert: #b1502e;
+  --export-btn-bg: linear-gradient(135deg, #6fc9a3, #3fa87a);
+  --export-btn-ink: #ffffff;
+  --export-btn-shadow: rgba(63, 168, 122, .28);
+
+  /* 微信内导出面板（内置浏览器不支持下载，改分段复制） */
+  --wx-overlay: rgba(28, 48, 36, .55);
+  --wx-box-shadow: 0 -10px 40px rgba(0, 0, 0, .2);
+  --wx-desc: #5a7a68;
+  --wx-desc-mark: #2e8b5f;
+  --wx-code-bg: #eaf8f2;
+  --wx-code-ink: #2a6a4a;
+  --wx-row-bg: #fbfefc;
+  --wx-row-line: #d8ebdf;
+  --wx-row-done-bg: #eaf8f2;
+  --wx-row-done-line: #5ec99a;
+  --wx-idx-bg: #e4f2eb;
+  --wx-idx-ink: #2e8b5f;
+  --wx-idx-done-bg: #3fa87a;
+  --wx-idx-done-ink: #ffffff;
+  --wx-row-lb: #1e4a2a;
+  --wx-row-sz: #8aaa95;
+  --wx-btn-bg: linear-gradient(135deg, #5ec99a, #3fa87a);
+  --wx-btn-ink: #ffffff;
+  --wx-btn-shadow: rgba(63, 168, 122, .24);
+  --wx-foot: #8aaa95;
+  --wx-list-thumb: #cfe8db;
+  /* 段数过多时的提示块（含图备份在微信里会切出很多段） */
+  --wx-hint-bg: #fdf7ec;
+  --wx-hint-line: #f0e0c4;
+  --wx-hint-ink: #9a7133;
+  --wx-block-bg: #fdeef0;
+  --wx-block-line: #f2c6cf;
+  --wx-block-ink: #a3214a;
+}
+
+/* ============ 我的卡片：页面专属色板 ============
+   原版把 202 个色值写死在单文件 <style> 里。这里收成唯一来源，ui/mycards.css 只写 var(--mc-*)。
+   数值一个没改，抽离前后计算样式逐项一致；语义明确的给名字，
+   其余是渐变端点 / 阴影 / 一次性近似色，按「区域 + 序号」编号，不硬造语义名。
+   与 --ab-* / --home-* 同级：换本页配色只改这一节。 */
+:root {
+  /* 通用语义（页面底色、文字、按钮、编辑器主色） */
+  --mc-page-bg: #f0f7f0;
+  --mc-page-fg: #1e3a2a;
+  --mc-header-bg: #d9edd9;
+  --mc-title-fg: #1e4a2a;
+  --mc-stats-bg: #c4e0c4;
+  --mc-stats-num: #1f6b3a;
+  --mc-white: #fff;
+  --mc-surface: #ffffff;
+  --mc-filter-bg: #e6f3e6;
+  --mc-label-fg: #1f4a2a;
+  --mc-input-border: #b3d9b3;
+  --mc-input-bg: #fafffa;
+  --mc-focus-border: #6a9e6a;
+  --mc-primary-bg: #6fbf8f;
+  --mc-primary-hover: #5bae7d;
+  --mc-soft-bg: #cfe2cf;
+  --mc-soft-hover: #b8d4b8;
+  --mc-muted-fg: #8aaa8a;
+  --mc-card-border: #8fbe8f;
+  --mc-cancel-bg: #dcebd9;
+  --mc-answer-fg: #1c3322;
+  --mc-editor-border: #c2ddc2;
+  --mc-imgctl-muted: #5b7a5b;
+  --mc-editor-bg: #f8fcf8;
+  --mc-imgctl-bg: #edf5ed;
+  --mc-imgctl-fg: #2a5a2a;
+  --mc-imgctl-accent: #4f8a4f;
+  --mc-imgctl-lock-bg: #dcecd9;
+
+  /* 顶部、统计球与同步球 */
+  --mc-header-01: rgba(60, 110, 60, 0.12);
+  --mc-header-02: rgba(60, 110, 60, 0.10);
+  --mc-header-03: #a8d0a8;
+  --mc-header-04: rgba(60, 110, 60, 0.20);
+  --mc-header-05: #e5c882;
+  --mc-header-06: #fdf7e6;
+  --mc-header-07: #b8891f;
+  --mc-header-08: #7cb04b;
+  --mc-header-09: rgba(124, 176, 75, .20);
+  --mc-header-10: #4f7f2a;
+  --mc-header-11: #e0bd72;
+  --mc-header-12: rgba(229, 200, 130, .32);
+  --mc-header-13: #f7edd6;
+  --mc-header-14: #6cbcae;
+  --mc-header-15: rgba(108, 188, 174, .20);
+  --mc-header-16: #2f8b7d;
+  --mc-header-17: #8bbde0;
+  --mc-header-18: #eaf4fc;
+  --mc-header-19: rgba(168, 207, 232, .30);
+  --mc-header-20: #2e6a99;
+  --mc-header-21: #e2eefa;
+  --mc-header-22: rgba(90, 140, 115, .14);
+  --mc-header-23: #e8a8c8;
+  --mc-header-24: #a85a7a;
+  --mc-header-25: #fceef4;
+  --mc-header-26: #b89ee0;
+  --mc-header-27: #6a4a9a;
+  --mc-header-28: #f0eaf8;
+  --mc-header-29: rgba(90, 140, 115, .22);
+
+  /* 筛选栏与按钮 */
+  --mc-filter-01: rgba(80, 150, 80, 0.2);
+  --mc-filter-02: rgba(80, 160, 110, .28);
+  --mc-filter-03: #a9d9b8;
+  --mc-filter-04: #14522c;
+  --mc-filter-05: rgba(80, 160, 110, .16);
+  --mc-filter-06: #92cba4;
+
+  /* 卡片列表、分组条与答案内容 */
+  --mc-card-01: #1d6a5d;
+  --mc-card-02: #cbe6df;
+  --mc-card-03: #79a49c;
+  --mc-card-04: #d3e7e2;
+  --mc-card-05: rgba(60, 100, 60, 0.08);
+  --mc-card-06: rgba(50, 100, 50, 0.13);
+  --mc-card-07: #d4a24e;
+  --mc-card-08: #fdfbf6;
+  --mc-card-09: rgba(63, 174, 140, 0.85);
+  --mc-card-10: rgba(63, 174, 140, 0.30);
+  --mc-card-11: rgba(63, 174, 140, 0);
+  --mc-card-12: rgba(63, 174, 140, 0.55);
+  --mc-card-13: #1a4a2a;
+  --mc-card-14: #1f5a2f;
+  --mc-card-15: #d9c8b0;
+  --mc-card-16: #5a3f1a;
+  --mc-card-17: #f2e8ce;
+  --mc-card-18: #5a4a1a;
+  --mc-card-19: #8a6a1a;
+  --mc-card-20: #bd9333;
+  --mc-card-21: #faf6ea;
+  --mc-card-22: #2b2b2b;
+  --mc-card-23: #3f6a3f;
+  --mc-card-24: #e6f0e6;
+  --mc-card-25: #d8ead8;
+  --mc-card-26: #b8a06a;
+  --mc-card-27: #4f6a8f;
+  --mc-card-28: #8a4a4a;
+  --mc-card-29: #5f8a5f;
+  --mc-card-30: #f3faf3;
+  --mc-card-31: #1a3322;
+  --mc-card-32: rgba(0, 0, 0, 0.08);
+  --mc-card-33: #b3ddc3;
+  --mc-card-34: #555;
+  --mc-card-35: #e8f3e8;
+  --mc-card-36: #e8d9b0;
+  --mc-card-37: #f6eddd;
+  --mc-card-38: #f1e7cd;
+  --mc-card-39: #1e5a3a;
+  --mc-card-40: #eef6ef;
+  --mc-card-41: #dceade;
+  --mc-card-42: #d3e6d3;
+  --mc-card-43: #2f7d55;
+  --mc-card-44: #1a1a1a;
+  --mc-card-45: #000;
+  --mc-card-46: #4f7a4f;
+
+  /* 弹层与章节选择器 */
+  --mc-dialog-01: rgba(16, 40, 28, .42);
+  --mc-dialog-02: rgba(20, 50, 30, .28);
+  --mc-dialog-03: #eaf3ea;
+  --mc-dialog-04: #8a9a8a;
+  --mc-dialog-05: #f0f5f0;
+  --mc-dialog-06: #eef8f0;
+  --mc-dialog-07: #a6d0a8;
+  --mc-dialog-08: #d8ecdc;
+  --mc-dialog-09: #10401f;
+  --mc-dialog-10: rgba(80, 150, 80, .2);
+  --mc-dialog-11: #7aa87a;
+  --mc-dialog-12: #cfe3cf;
+  --mc-dialog-13: rgba(40, 80, 50, .16);
+  --mc-dialog-14: #e2f0e4;
+  --mc-dialog-15: #7a5426;
+  --mc-dialog-16: #f4ead9;
+  --mc-dialog-17: #b6dcc2;
+  --mc-dialog-18: #f6fbf7;
+  --mc-dialog-19: #2f6a44;
+  --mc-dialog-20: #8fc79f;
+  --mc-dialog-21: rgba(80, 150, 80, .15);
+  --mc-dialog-22: #9ab89a;
+  --mc-dialog-23: rgba(80, 160, 110, .22);
+  --mc-dialog-24: #c8ddc8;
+  --mc-dialog-25: #f7fcf8;
+  --mc-dialog-26: rgba(80, 140, 100, .18);
+  --mc-dialog-27: #eef7f0;
+  --mc-dialog-28: #bcd9c0;
+  --mc-dialog-29: #a8bda8;
+  --mc-dialog-30: #6f8f6f;
+  --mc-dialog-31: #f5f0e0;
+  --mc-dialog-32: #d3e7cf;
+
+  /* 编辑器、工具栏与图片尺寸条 */
+  --mc-editor-01: #3f2a1a;
+  --mc-editor-02: rgba(80, 150, 80, 0.15);
+  --mc-editor-03: rgba(79, 138, 79, 0);
+  --mc-editor-04: rgba(79, 138, 79, 0.28);
+  --mc-editor-05: rgba(80, 160, 110, .26);
+  --mc-editor-06: #e8e8e8;
+  --mc-editor-07: #2f4a2f;
+  --mc-editor-08: #d6d6d6;
+  --mc-editor-09: #a8c8a8;
+  --mc-editor-10: #14361f;
+  --mc-editor-11: #d4d9c4;
+  --mc-editor-12: #c4cdb0;
+  --mc-editor-13: #cfe0e8;
+  --mc-editor-14: #1e4a5a;
+  --mc-editor-15: #b8d4e0;
+  --mc-editor-16: #e2dcef;
+  --mc-editor-17: #3d2a6a;
+  --mc-editor-18: #d2c9e8;
+  --mc-editor-19: #e6d6d6;
+  --mc-editor-20: #6a3a3a;
+  --mc-editor-21: #dcc4c4;
+  --mc-editor-22: #f0f5f2;
+  --mc-editor-23: #5a7a68;
+
+  /* 导出 / 导入 / AI 导入面板与提示 */
+  --mc-panel-01: #e4eee8;
+  --mc-panel-02: #5ec99a;
+  --mc-panel-03: #3fa87a;
+  --mc-panel-04: rgba(63, 168, 122, .26);
+  --mc-panel-05: #f08a72;
+  --mc-panel-06: #e05a4a;
+  --mc-panel-07: rgba(224, 90, 74, .26);
+  --mc-panel-08: #4a6a58;
+  --mc-panel-09: #f7fbf7;
+  --mc-panel-10: #2f5a3f;
+  --mc-panel-11: #d6ebd6;
+  --mc-panel-12: #e2f4eb;
+  --mc-panel-13: #fafcfa;
+  --mc-panel-14: #f0f8f2;
+  --mc-panel-15: #eefaf3;
+  --mc-panel-16: #a8dcc2;
+  --mc-panel-17: #6d8a74;
+  --mc-panel-18: #7d9c84;
+  --mc-panel-19: #2a4a2a;
+  --mc-panel-20: #f0faf0;
+  --mc-panel-21: rgba(0, 0, 0, 0.25);
+
+  /* 窄屏规则、看图浮层与滚动条 */
+  --mc-viewer-01: rgba(10, 26, 18, .84);
+  --mc-viewer-02: rgba(0, 0, 0, .45);
+  --mc-viewer-03: rgba(255, 255, 255, .92);
+  --mc-viewer-04: #2a5a3a;
+  --mc-viewer-05: rgba(255, 255, 255, .95);
+  --mc-viewer-06: rgba(0, 0, 0, .30);
+  --mc-viewer-07: #dff0df;
+  --mc-viewer-08: #c8e8cb;
+  --mc-viewer-09: rgba(40, 110, 60, .22);
+  --mc-viewer-10: rgba(40, 110, 60, .10);
+  --mc-viewer-11: #bcdfc0;
+  --mc-viewer-12: rgba(30, 80, 50, .10);
+  --mc-viewer-13: #cfe8d2;
+  --mc-viewer-14: #b7dcbd;
+  --mc-viewer-15: #a8d0af;
+  --mc-viewer-16: #cfe0cf;
+  --mc-viewer-17: #dce8dc;
+  --mc-viewer-18: #6f9e6f;
+
+}
+
+/* ============ 我的卡片：调顺序圆钮与提示条 ============
+   双态四态配色收在这里，ui/mycards.css 只写 var()。常态雾紫灰饱和 19%，
+   激活柔和藕紫饱和 35%，但常态白底、不挂外圈光；hover 时才提亮并加光晕。
+   手动态是长期状态，靠边框、圆点与右下角标辨别，不靠常驻发光。
+   角标取球边框同色，描 1px 白边把小点从同色边框里抠出来，不描粗边。 */
+:root {
+  --mc-sort-border: #a497b8;
+  --mc-sort-dot: #6b5c85;
+  --mc-sort-ring: rgba(164, 151, 184, .20);
+  --mc-sort-hover-border: #bda9d4;
+  --mc-sort-hover-bg: #f5f1fa;
+  --mc-sort-hover-dot: #5c4a7a;
+  --mc-sort-hover-ring: rgba(189, 169, 212, .30);
+  --mc-sort-press-bg: #e8dcf3;
+
+  --mc-sort-active-border: #a98fc9;
+  --mc-sort-active-bg: #ffffff;
+  --mc-sort-active-dot: #6a4a9a;
+  --mc-sort-active-ring: rgba(169, 143, 201, .30);
+  --mc-sort-active-hover-border: #c0a6da;
+  --mc-sort-active-hover-bg: #efe6f8;
+  --mc-sort-active-hover-dot: #5a3d8a;
+  --mc-sort-active-press-bg: #e4d5f2;
+  --mc-sort-flag-bg: #a98fc9;
+
+  --mc-sort-drop: #a98fc9;
+}
+
+/* ============ AI 答疑助手：色值 ============
+   全部取自原版自包含样式，按首次出现顺序编号；ui/ai.css 只写 var()。
+   反向还原后与原版样式逐字符一致，换配色只改这一节。 */
+:root {
+  --ai-c001: #ffffff;
+  --ai-c002: #b3e0c6;
+  --ai-c003: rgba(63,168,122,.12);
+  --ai-c004: #48a888;
+  --ai-c005: #8ed4b0;
+  --ai-c006: #3fa87a;
+  --ai-c007: rgba(63,168,122,.2);
+  --ai-c008: #fff;
+  --ai-c009: rgba(30,70,45,.22);
+  --ai-c010: rgba(180,220,200,.4);
+  --ai-c011: rgba(94,201,154,.10);
+  --ai-c012: rgba(94,201,154,.20);
+
+  --ai-c013: #eaf8f2;
+  --ai-c014: #dff2e8;
+  --ai-c015: #e0efe6;
+  --ai-c016: #1e4a2a;
+  --ai-c017: #3fae8c;
+  --ai-c018: rgba(63,174,140,.2);
+  --ai-c019: #a9cfbc;
+  --ai-c020: #2f6b52;
+  --ai-c021: #d3ded8;
+  --ai-c022: #9aada4;
+  --ai-c023: rgba(63,174,140,.09);
+  --ai-c024: #5a8068;
+
+  --ai-c025: #d3ecdf;
+  --ai-c026: #fbfefc;
+  --ai-c027: #7a9a85;
+  --ai-c028: #3a6a4a;
+  --ai-c029: #d8ebdf;
+  --ai-c030: #1e3a2a;
+  --ai-c031: #5ec99a;
+  --ai-c032: rgba(94,201,154,.16);
+  --ai-c033: #9ab5a5;
+  --ai-c034: rgba(63,168,122,.28);
+  --ai-c035: #c9e4d5;
+  --ai-c036: rgba(63,168,122,.22);
+
+  --ai-c037: #f3faf6;
+  --ai-c038: #1c3322;
+  --ai-c039: #e2f0e8;
+  --ai-c040: #a0b8ab;
+  --ai-c041: #fdf2ee;
+  --ai-c042: #c2563a;
+  --ai-c043: #f8ddd4;
+  --ai-c044: rgba(255,255,255,.85);
+  --ai-c045: #6a8f76;
+  --ai-c046: rgba(0,0,0,.06);
+  --ai-c047: #d8f0e4;
+  --ai-c048: #2a8a5e;
+
+  --ai-c049: #eef5fb;
+  --ai-c050: #4a86b8;
+  --ai-c051: #fdecec;
+  --ai-c052: #c25a5a;
+  --ai-c053: rgba(255,255,255,.28);
+  --ai-c054: rgba(255,255,255,.45);
+  --ai-c055: rgba(255,255,255,.5);
+  --ai-c056: rgba(69,185,140,.75);
+  --ai-c057: rgba(255,255,255,.9);
+  --ai-c058: #45b98c;
+  --ai-c059: rgba(69,185,140,.32);
+  --ai-c060: rgba(40,90,70,.24);
+
+  --ai-c061: #e6f2ec;
+  --ai-c062: #1e5a3a;
+  --ai-c063: #eef8f2;
+  --ai-c064: #2a6a4a;
+  --ai-c065: #e0f2e8;
+  --ai-c066: #3aa87a;
+  --ai-c067: #cfe6da;
+  --ai-c068: #6b8579;
+  --ai-c069: #eef4f1;
+  --ai-c070: rgba(40,90,70,.14);
+  --ai-c071: #e6efe9;
+  --ai-c072: rgba(40,90,70,.18);
+
+  --ai-c073: rgba(16,40,28,.42);
+  --ai-c074: rgba(20,50,30,.28);
+  --ai-c075: #e0eee6;
+  --ai-c076: #f7fcfa;
+  --ai-c077: #bfe3d0;
+  --ai-c078: #e6f4ec;
+  --ai-c079: #5a7a68;
+  --ai-c080: #f0f5f2;
+  --ai-c081: #e4eee8;
+  --ai-c082: rgba(12,32,22,.8);
+  --ai-c083: rgba(0,0,0,.42);
+  --ai-c084: #f4f8f6;
+
+  --ai-c085: #d9efe4;
+  --ai-c086: rgba(63,168,122,.4);
+  --ai-c087: rgba(255,255,255,.16);
+  --ai-c088: rgba(255,255,255,.26);
+  --ai-c089: #5e8a72;
+  --ai-c090: #e0f0e7;
+  --ai-c091: #cfe4d8;
+  --ai-c092: rgba(30,70,45,.16);
+  --ai-c093: rgba(180,220,200,.35);
+  --ai-c094: #cfe8db;
+  --ai-c095: #3a5a48;
+  --ai-c096: #f0faf5;
+
+  --ai-c097: #e4f4ea;
+  --ai-c098: #eaf5ee;
+  --ai-c099: #d8ecdf;
+  --ai-c100: #1f4a34;
+  --ai-c101: #7fd0a8;
+  --ai-c102: #2a5a3a;
+  --ai-c103: #fff3e0;
+  --ai-c104: #a86a1f;
+  --ai-c105: #e5f2ea;
+  --ai-c106: #fafdfc;
+  --ai-c107: #e8f2ec;
+  --ai-c108: rgba(94,201,154,.15);
+
+  --ai-c109: #a8c2b4;
+  --ai-c110: #fff4c9;
+  --ai-c111: #ffe08a;
+  --ai-c112: #8a6a1a;
+  --ai-c113: rgba(214,168,60,.28);
+  --ai-c114: #f2fbf6;
+  --ai-c115: #f7fdfa;
+  --ai-c116: rgba(238,249,243,.97);
+  --ai-c117: #b7e3cc;
+  --ai-c118: #eef9f3;
+  --ai-c119: #8fb3a2;
+  --ai-c120: rgba(0,0,0,.08);
+
+  --ai-c121: #e6f6ee;
+  --ai-c122: #cfeadd;
+  --ai-c123: rgba(255,255,255,.25);
+  --ai-c124: rgba(255,255,255,.4);
+  --ai-c125: #eaf6ef;
+  --ai-c126: rgba(16,40,28,.82);
+  --ai-c127: rgba(0,0,0,.4);
+}
+
+/* ---- AI 答疑助手：运行时样式收编后新增的色值 ---- */
+:root {
+  --ai-c128: rgba(69,185,140,.34);
+  --ai-c129: #66d3a3;
+  --ai-c130: #e2efe8;
+  --ai-c131: #8aa99a;
+  --ai-c132: #eaf8f0;
+  --ai-c133: #2f7d55;
+  --ai-c134: #d8f0e2;
+  --ai-c135: #1f6440;
+  --ai-c136: rgba(20,50,35,.28);
+  --ai-c137: #8aa;
+  --ai-c138: #d5e8de;
+  --ai-c139: #f8fbf9;
+
+  --ai-c140: #8bcbb0;
+  --ai-c141: #c8ead8;
+  --ai-c142: #eef3f0;
+  --ai-c143: #5b7a68;
+  --ai-c144: #4fb488;
+  --ai-c145: #f08a72;
+  --ai-c146: #e05a4a;
+  --ai-c147: #e2eae5;
+  --ai-c148: #2a4a2a;
+  --ai-c149: #f0faf0;
+  --ai-c150: rgba(0,0,0,.25);
+}
+
+/* ---- AI 答疑助手：图标描边色 ---- */
+:root {
+  --ai-c151: #34775c;
+  --ai-c152: #a3b5ab;
+}
+
+/* 全站搜索页：色值从原版样式逐值抽取，业务样式只写 var() */
+:root {
+  --ss-001: #f0f7f0;
+  --ss-002: #1e3a2a;
+  --ss-003: #d9edd9;
+  --ss-004: rgba(60, 110, 60, 0.12);
+  --ss-005: #c4e0c4;
+  --ss-006: #1e4a2a;
+  --ss-007: rgba(60, 110, 60, 0.10);
+  --ss-008: #a8d0a8;
+  --ss-009: rgba(60, 110, 60, 0.20);
+  --ss-010: #b3d9b3;
+  --ss-011: #fafffa;
+  --ss-012: #86a98c;
+  --ss-013: #6a9e6a;
+  --ss-014: rgba(80,150,80,.2);
+  --ss-015: #e2f0e2;
+  --ss-016: #4d7a58;
+  --ss-017: #cfe6cf;
+  --ss-018: #23603a;
+  --ss-019: rgba(63,174,140,.20);
+  --ss-020: rgba(63,175,194,.17);
+  --ss-021: rgba(90,150,222,.17);
+  --ss-022: rgba(126,112,214,.155);
+  --ss-023: rgba(155,107,196,.15);
+  --ss-024: rgba(196,90,140,.16);
+  --ss-025: rgba(205,96,66,.16);
+  --ss-026: #fff;
+  --ss-027: #1F2522;
+  --ss-028: #0E1411;
+  --ss-029: #DCF0EA;
+  --ss-030: #f1f9f1;
+  --ss-031: #9CB2A0;
+  --ss-032: #3f8a63;
+  --ss-033: #f8fdf9;
+  --ss-034: #eefaf3;
+  --ss-035: #A9D6BE;
+  --ss-036: rgba(60,110,60,.08);
+  --ss-037: #1F4C3E;
+  --ss-038: #EAF8F2;
+  --ss-039: #4A806F;
+  --ss-040: rgba(63,174,140,.08);
+  --ss-041: #9BB3AC;
+  --ss-042: #3B9B7E;
+  --ss-043: #F6FBFA;
+  --ss-044: #EFF8F5;
+  --ss-045: #AFDED0;
+  --ss-046: #1F344C;
+  --ss-047: #E1ECF9;
+  --ss-048: #EAF2FD;
+  --ss-049: #4A6280;
+  --ss-050: rgba(90,150,222,.08);
+  --ss-051: #9BA6B3;
+  --ss-052: #3B679B;
+  --ss-053: #F6F8FB;
+  --ss-054: #EFF3F8;
+  --ss-055: #AFC5DE;
+  --ss-056: #4C3D1F;
+  --ss-057: #F7EFDF;
+  --ss-058: #FDF7E9;
+  --ss-059: #806E4A;
+  --ss-060: rgba(208,164,78,.08);
+  --ss-061: #B3AB9B;
+  --ss-062: #9B7B3B;
+  --ss-063: #FBF9F6;
+  --ss-064: #F8F5EF;
+  --ss-065: #DECFAF;
+  --ss-066: #4C1F32;
+  --ss-067: #F8E6EE;
+  --ss-068: #FCEFF5;
+  --ss-069: #804A61;
+  --ss-070: rgba(217,115,159,.08);
+  --ss-071: #B39BA5;
+  --ss-072: #9B3B64;
+  --ss-073: #FBF6F8;
+  --ss-074: #F8EFF3;
+  --ss-075: #DEAFC4;
+  --ss-076: #1F464C;
+  --ss-077: #DCF1F4;
+  --ss-078: #E9F7F9;
+  --ss-079: #4A7880;
+  --ss-080: rgba(63,175,194,.08);
+  --ss-081: #9BAFB3;
+  --ss-082: #3B8D9B;
+  --ss-083: #F6FBFB;
+  --ss-084: #EFF7F8;
+  --ss-085: #AFD8DE;
+  --ss-086: #251F4C;
+  --ss-087: #E8E5F8;
+  --ss-088: #F1EFFC;
+  --ss-089: #514A80;
+  --ss-090: rgba(126,112,214,.08);
+  --ss-091: #9E9BB3;
+  --ss-092: #483B9B;
+  --ss-093: #F7F6FB;
+  --ss-094: #F0EFF8;
+  --ss-095: #B6AFDE;
+  --ss-096: #4C291F;
+  --ss-097: #F9E7E1;
+  --ss-098: #FDF1EC;
+  --ss-099: #80564A;
+  --ss-100: rgba(224,120,90,.08);
+  --ss-101: #B3A09B;
+  --ss-102: #9B503B;
+  --ss-103: #FBF7F6;
+  --ss-104: #F8F1EF;
+  --ss-105: #DEBAAF;
+  --ss-106: #371F4C;
+  --ss-107: #EDE4F4;
+  --ss-108: #F7EFFB;
+  --ss-109: #674A80;
+  --ss-110: rgba(155,107,196,.08);
+  --ss-111: #A89BB3;
+  --ss-112: #6F3B9B;
+  --ss-113: #F9F6FB;
+  --ss-114: #F4EFF8;
+  --ss-115: #C9AFDE;
+  --ss-116: #1F3D4C;
+  --ss-117: #E1EBEF;
+  --ss-118: #EDF4F8;
+  --ss-119: #4A6E80;
+  --ss-120: rgba(91,143,168,.08);
+  --ss-121: #9BABB3;
+  --ss-122: #3B7C9B;
+  --ss-123: #F6FAFB;
+  --ss-124: #EFF5F8;
+  --ss-125: #AFCFDE;
+  --ss-126: #28302B;
+  --ss-127: #fff8e6;
+  --ss-128: #e8c877;
+  --ss-129: #fff3c4;
+  --ss-130: #6b5010;
+  --ss-131: #4a6a52;
+  --ss-132: #8aa992;
+}
+
+/* 主页真题模块的答案册入口（浅紫描边款） */
+:root {
+  --home-answer-bg: #F7EFFB;
+  --home-answer-line: #C096DD;
+  --home-answer-ink: #7B4FA6;
+  --home-answer-bg-hover: #EFE4FA;
+  --home-answer-line-hover: #9B6BC4;
+  --home-answer-ink-hover: #6B3F96;
+}
+
+/* 板块导航：序号圆钮与弹出面板。底色与「← 主页」同族，随主题走 */
+:root {
+  --secnav-btn-bg: #c4e0c4;
+  --secnav-btn-fg: #1e4a2a;
+  --secnav-btn-hover: #a8d0a8;
+  --secnav-ring: #3FAE8C;
+  --secnav-panel-bg: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+  --secnav-panel-border: #e0ece0;
+  --secnav-shadow: 0 1px 2px rgba(60, 110, 60, .06), 0 10px 28px rgba(60, 110, 60, .20), 0 2px 0 rgba(255, 255, 255, .9) inset;
+  --secnav-item-fg: #1e3a2a;
+  --secnav-cur: #3FAE8C;
+  --secnav-scrim: rgba(30, 74, 42, .18);
+  --secnav-shadow-drawer: 0 2px 6px rgba(30, 74, 42, .10), 0 16px 40px rgba(30, 74, 42, .26);
+}
+
+/* 空态里那行小字 */
+:root {
+  --empty-sub-fg: #6e8b7c;
+}
+
+/* 回到顶部箭头 */
+:root {
+  --totop-fg: #78d2b4;
+  --totop-ring: rgba(94, 201, 154, 0.6);
+  --totop-shadow: 0 2px 4px rgba(120, 210, 180, 0.3);
+  --totop-shadow-hover: 0 3px 7px rgba(120, 210, 180, 0.5);
+}
+
+/* 搜索跳转遮罩：engine/search-jump.js 注入的样式从这里取色 */
+:root {
+  --sj-veil-bg: #f0f7f0;
+  --sj-card-border: #e6f0e8;
+  --sj-card-accent: #dfeee3;
+  --sj-skel: #e9f2ec;
+  --sj-shine-1: rgba(233, 244, 236, .42);
+  --sj-shine-2: rgba(255, 255, 255, .5);
+  --sj-hint: #547d60;
+  --sj-dot: #7fb98f;
+  --sj-bar-border: #cfe8da;
+  --sj-bar-fg: #2c4a36;
+  --sj-bar-link: #23603a;
+  --sj-bar-kw: #7b9a80;
+  --sj-list-fg: #5c8a68;
+  --sj-list-line: #e2eee6;
+  --sj-x-bg: #eef7ee;
+  --sj-x-fg: #4d7a58;
+  --sj-x-hover-bg: #dff0df;
+  --sj-bar-shadow: 0 6px 20px rgba(40, 90, 50, .18);
+}
+
+/* 空态插图与缺图占位：engine/page.js 与 engine/blobstore.js 的内联 SVG 取色 */
+:root {
+  --empty-ill-1: #9FD9B8;
+  --empty-ill-2: #CDE9D6;
+  --empty-ill-3: #4FAE7D;
+  --empty-ill-4: #2F7A4F;
+  --miss-bg: #f7faf7;
+  --miss-line: #cfe0d4;
+  --miss-fg: #5f7d66;
+  --miss-fg2: #96ab9b;
+}

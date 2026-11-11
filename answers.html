@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E0D1EF">
+<title>真题答案册 · 南开经济学 · 知识库</title>
+
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
+<link rel="stylesheet" href="ui/components.css?v=20261110a">
+<link rel="stylesheet" href="ui/answers.css?v=20261110a">
+<link rel="stylesheet" href="ui/top-btn.css?v=20261110a">
+<link rel="stylesheet" href="ui/ai.css?v=20261110a">
+<script src="engine/search-jump.js?v=20261110a"></script>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="tb-row1">
+    <a class="back" href="8past-exams.html"><span class="arrow">⬅</span><span>题库</span></a>
+    <span class="tb-sep"></span>
+    <div class="tb-title">
+      <h1>真题答案册</h1>
+      <div class="tb-sub" id="tbSub"></div>
+    </div>
+    <label class="st-switch" id="stSwitch" title="熟悉度：给每道真题标一下掌握程度">
+      <input type="checkbox" id="stToggle">
+      <span class="st-track"></span>
+      <span class="st-lbl">熟悉度</span>
+    </label>
+
+    <!-- 工具组默认住在第一行最右；熟悉度一开，脚本把它挪到第二行最右 -->
+    <div class="tb-tools">
+      <button type="button" class="fav-only" id="favOnly" aria-pressed="false"
+              title="只看收藏过的题"><span class="fo-star" aria-hidden="true">⭐</span>收藏</button>
+      <span class="search-wrap">
+        <input id="searchInput" type="text" placeholder="搜全部真题的题干 / 答案…" autocomplete="off">
+        <button type="button" class="search-reset" id="searchReset" aria-label="清空搜索"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 2.2l7.6 7.6M9.8 2.2l-7.6 7.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      </span>
+    </div>
+  </div>
+
+  <!-- 第二行只在熟悉度开着时出现：左边档位条，右边工具组 -->
+  <div class="tb-row2">
+    <div class="st-bar" id="stBar"></div>
+  </div>
+</div>
+
+<div class="yearbar" id="yearbar"></div>
+
+<section class="content" id="content"></section>
+
+<aside id="navPanel" hidden>
+  <div class="np-card">
+    <div class="np-title" id="npTitle"></div>
+    <div id="npRows"></div>
+  </div>
+  <button class="np-fab" id="npFab" type="button" title="题号目录"><span>题</span><span>号</span></button>
+</aside>
+
+<script src="project.config.js?v=20261110a"></script>
+<script src="answer.config.js?v=20261110a"></script>
+<script src="data/answers.js?v=20261110a"></script>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="engine/render/common.js?v=20261110a"></script>
+<script src="engine/store.js?v=20261110a"></script>
+<script src="engine/lines.js?v=20261110a"></script>
+<script src="engine/render/table.js?v=20261110a"></script>
+<script src="engine/render/unicode.js?v=20261110a"></script>
+<script src="engine/render/latex.js?v=20261110a"></script>
+<script src="engine/answer.js?v=20261110a"></script>
+<script src="engine/answer-search.js?v=20261110a"></script>
+<script src="engine/answer-nav.js?v=20261110a"></script>
+<script src="engine/answer-yearbar.js?v=20261110a"></script>
+<script src="engine/answers.js?v=20261110a"></script>
+<script src="engine/top-btn.js?v=20261110a"></script>
+
+<script>
+KB.Answers.mount();
+</script>
+<script>
+/* 答案册的条目是 .item，不是卡片列表页的 .card-item；
+   适配器把「当前卡片」定义为题号面板高亮的那一题。 */
+(function () {
+  'use strict';
+  function findItem(id) {
+    var book = window.ANSWER_BOOK;
+    if (!book || !book.papers) return null;
+    for (var i = 0; i < book.papers.length; i++) {
+      var paper = book.papers[i];
+      var parts = paper.parts || [];
+      for (var j = 0; j < parts.length; j++) {
+        var items = parts[j].items || [];
+        for (var k = 0; k < items.length; k++) {
+          if (items[k].id === id) return { paper: paper, part: parts[j], item: items[k] };
+        }
+      }
+    }
+    return null;
+  }
+  function labelOf(el) {
+    if (!el || !el.id) return '';
+    var hit = findItem(el.id), type = hit ? (hit.part.type || '') : '';
+    var noEl = el.querySelector('.q-head .no');
+    var no = noEl ? noEl.textContent.replace(/\s+/g, ' ').trim() : '';
+    var title = hit ? String(hit.paper.title || '').replace(/\s+/g, ' ') : '';
+    return (title ? title + ' · ' : '') + (type ? type + ' ' : '') + '第 ' + no + ' 题';
+  }
+  window.__AI_CARD_ADAPTER__ = {
+    all: function () { return document.querySelectorAll('#content .item'); },
+    key: function (el) { return (el && el.id) ? 'id:' + el.id : ''; },
+    label: labelOf,
+    read: function (el, withAnswer) {
+      if (!el || !el.id) return null;
+      var stemEl = el.querySelector('.q-head .stem');
+      var ansEl = el.querySelector('.ans-body');
+      var qTxt = '';
+      if (stemEl) {
+        var c = stemEl.cloneNode(true);
+        Array.prototype.forEach.call(c.querySelectorAll('th,td'), function (td) {
+          td.appendChild(document.createTextNode(' '));
+        });
+        qTxt = c.textContent.replace(/\n{3,}/g, '\n\n').trim();
+      }
+      return {
+        key: 'id:' + el.id,
+        label: labelOf(el),
+        q: qTxt,
+        a: (withAnswer && ansEl) ? ansEl.textContent.replace(/\n{3,}/g, '\n\n').trim() : '',
+        n: ''
+      };
+    },
+    focus: function () {
+      var on = document.querySelector('#npRows a.on');
+      if (!on || !on.dataset.id) return null;
+      var el = document.getElementById(on.dataset.id);
+      if (!el || !el.classList.contains('item')) return null;
+      var r = el.getBoundingClientRect();
+      var vh = window.innerHeight || 800;
+      if (r.bottom <= 0 || r.top >= vh) return null;
+      return el;
+    }
+  };
+})();
+</script>
+
+<script src="ai.config.js?v=20261110a"></script>
+<script src="engine/ui.js?v=20261110a"></script>
+<script src="engine/editor/core.js?v=20261110a"></script>
+<script src="engine/ai/common.js?v=20261110a"></script>
+<script src="engine/ai/codec.js?v=20261110a"></script>
+<script src="engine/ai/storage.js?v=20261110a"></script>
+<script src="engine/ai/markdown.js?v=20261110a"></script>
+<script src="engine/ai/context.js?v=20261110a"></script>
+<script src="engine/ai/attach.js?v=20261110a"></script>
+<script src="engine/ai/nav.js?v=20261110a"></script>
+<script src="engine/ai/messages.js?v=20261110a"></script>
+<script src="engine/ai/stream.js?v=20261110a"></script>
+<script src="engine/ai/share.js?v=20261110a"></script>
+<script src="engine/ai/cards.js?v=20261110a"></script>
+<script src="engine/ai/core.js?v=20261110a"></script>
+<script>KB.AI.mount();</script>
+</body>
+</html>

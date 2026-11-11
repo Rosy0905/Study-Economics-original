@@ -1,0 +1,153 @@
+/* 板块串连导航：序号圆钮与面板。
+   尺寸靠 --secnav-s 换算：窄屏 1.0、宽屏 1.3。
+   颜色全部取自 tokens 的 --secnav-*，换主题时跟着走。 */
+
+.secnav-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* 34px 正圆，底色与「← 主页」「总卡」同族，无边无白 */
+.secnav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--secnav-btn-bg);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--secnav-btn-fg);
+  transition: background .18s ease, transform .18s ease;
+}
+.secnav-btn:hover { background: var(--secnav-btn-hover); }
+.secnav-btn[aria-expanded="true"] { background: var(--secnav-btn-hover); }
+.secnav-btn:active { transform: scale(.94); }
+.secnav-btn:focus-visible { outline: 2px solid var(--secnav-ring); outline-offset: 2px; }
+
+/* 面板：绝对定位在顶栏卡片内，left / top 由脚本按按钮算出来 */
+.secnav-panel {
+  --secnav-s: 1;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  box-sizing: border-box;
+  background: var(--secnav-panel-bg);
+  border: 1px solid var(--secnav-panel-border);
+  border-radius: calc(12px * var(--secnav-s));
+  padding: calc(7px * var(--secnav-s));
+  display: grid;
+  gap: calc(5px * var(--secnav-s));
+  box-shadow: var(--secnav-shadow);
+  transform-origin: 0 0;
+  animation: secnavIn .22s cubic-bezier(.32, 1.45, .52, 1);
+}
+.secnav-panel[hidden] { display: none; }
+
+@keyframes secnavIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.9); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 小箭头：白色方块转 45°，指在按钮圆心 */
+.secnav-panel::before {
+  content: "";
+  position: absolute;
+  top: calc(-5px * var(--secnav-s));
+  left: var(--secnav-arrow, calc(11px * var(--secnav-s)));
+  width: calc(9px * var(--secnav-s));
+  height: calc(9px * var(--secnav-s));
+  background: #fff;
+  border-left: 1px solid var(--secnav-panel-border);
+  border-top: 1px solid var(--secnav-panel-border);
+  transform: rotate(45deg);
+}
+
+/* 条目：浅底药丸 + 实心色号方块，当前板块加一圈描边 */
+.secnav-item {
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--secnav-s));
+  padding: calc(5px * var(--secnav-s)) calc(9px * var(--secnav-s));
+  border-radius: calc(8px * var(--secnav-s));
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: calc(11px * var(--secnav-s));
+  color: var(--secnav-item-fg);
+  box-sizing: border-box;
+  transition: filter .15s ease;
+}
+.secnav-item:hover { filter: brightness(.96); }
+.secnav-item.is-current { outline: 1px solid var(--secnav-cur); outline-offset: -1px; }
+
+.secnav-num {
+  width: calc(15px * var(--secnav-s));
+  height: calc(15px * var(--secnav-s));
+  border-radius: calc(5px * var(--secnav-s));
+  color: #fff;
+  font-size: calc(10px * var(--secnav-s));
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+/* 遮罩：只在窄屏配合底部抽屉出现，宽屏隐藏 */
+.secnav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: var(--secnav-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+.secnav-scrim.is-open { opacity: 1; pointer-events: auto; }
+
+/* 窄屏（≤640，与页面自身断点一致）：顶栏竖堆成四行，
+   从按钮下方弹出必然横切标题，改成贴底抽屉，一次都不碰顶栏内容 */
+@media (max-width: 640px) {
+  .secnav-scrim { display: block; z-index: 940; }
+  .secnav-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    top: auto;
+    z-index: 945;
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+    gap: 7px;
+    padding: 9px;
+    border-radius: 16px;
+    box-shadow: var(--secnav-shadow-drawer);
+    animation: secnavUp .22s cubic-bezier(.32, 1.45, .52, 1);
+  }
+  .secnav-panel::before { display: none; }
+  .secnav-item { justify-content: center; padding: 10px 6px; font-size: 12px; border-radius: 10px; }
+  .secnav-num { width: 17px; height: 17px; font-size: 11px; border-radius: 6px; }
+}
+
+@media (min-width: 641px) {
+  .secnav-scrim { display: none; }
+  .secnav-panel { --secnav-s: 1.3; }
+}
+
+@keyframes secnavUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secnav-panel { animation: none; }
+}

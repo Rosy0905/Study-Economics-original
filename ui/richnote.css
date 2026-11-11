@@ -1,0 +1,160 @@
+/* 富文本笔记（engine/richnote.js）的样式表。
+   加载顺序：index.html 里必须放在 page.css 之后 —— 层叠优先级与旧的运行时注入一致。
+   选择器全部带 rte- 前缀或落在 .note-editor / .rte-* 内，不与页面样式撞车。
+   颜色尽量引用 ui/tokens.css 的变量，换色只动 tokens.css；
+   中性色（纯黑正文、白色浮层、黑色阴影）保留字面值。 */
+    /* 手机点按钮不留蓝印子：点击高亮（-webkit-tap-highlight-color）是可继承属性，
+           只在按钮上设不够，写在根元素上才能盖住页面里所有元素；
+           焦点框与 :active 残留只在有鼠标的设备上生效，触摸设备上一律关。 */
+html,body{-webkit-tap-highlight-color:transparent;}
+button,input,select,textarea,label,a,.rte-bar,.rte-imgctl,.imgctl,.rte-viewer-bar{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+.rte-bar button:focus,.rte-bar button:focus-visible,.rte-imgctl button:focus,.rte-imgctl button:focus-visible,.imgctl button:focus,.imgctl button:focus-visible,.rte-viewer-bar button:focus,.rte-viewer-bar button:focus-visible,.rte-modal button:focus,.rte-modal button:focus-visible{outline:none;}
+    /* 工具栏整体 */
+.rte-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+    /* 所有按钮统一 28px 高、flex 垂直居中，排两行也上下对齐 */
+.rte-bar button{background:var(--rte-btn);border:none;padding:0 12px;border-radius:30px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;cursor:pointer;color:var(--rte-btn-ink);font-weight:500;font-family:inherit;transition:background .18s ease,box-shadow .18s ease,transform .12s ease;line-height:1;
+    /* 触摸设备配套：关双击缩放等待（touch-action:manipulation）、
+           文字不可选（免得误触发长按选词）、去焦点框 */
+-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none;outline:none;-webkit-appearance:none;}
+    /* 观感：浅绿底 + 悬停阴影，不做渐变和高光 */
+@media (hover:hover) and (pointer:fine){.rte-bar button:hover{background:var(--rte-btn-hover);box-shadow:0 5px 13px var(--rte-bar-shadow),0 1px 3px var(--rte-bar-shadow-soft);transform:translateY(-1px);}
+    /* :active 只留给有鼠标的设备。触摸设备上 :active 会在手指离开后赖着不走，
+           表现就是「按钮上留着一块按下去的样子」——和上面的点击高亮叠在一起就是那块蓝印子。 */
+.rte-bar button:active{transform:scale(.97);background:var(--rte-line);}}
+.rte-bar button.on{background:var(--rte-btn-on);color:var(--rte-btn-on-ink);font-weight:700;}
+.rte-bar .rte-fmt{padding:0 11px;font-size:13.5px;background:var(--rte-fmt);color:var(--rte-fmt-ink);}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-fmt:hover{background:var(--rte-fmt-hover);}}
+.rte-bar .rte-img{background:var(--rte-imgb);color:var(--rte-fmt-ink);}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-img:hover{background:var(--rte-imgb-hover);}}
+.rte-bar .rte-tbl{background:var(--rte-tblb);color:var(--rte-tblb-ink);}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-tbl:hover{background:var(--rte-tblb-hover);}}
+.rte-bar .rte-fml{background:var(--rte-fmlb);color:var(--rte-fmlb-ink);}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-fml:hover{background:var(--rte-fmlb-hover);}}
+    /* 字重取 500，与卡片头部徽标一个分量 */
+.rte-bar .rte-save{background:var(--rte-btn-on);color:var(--rte-save-ink);font-weight:500;}
+    /* 保存成功态只换字不改配色：浅绿底 + 深绿字，白字加深绿对比度不够 */
+.rte-bar .rte-save.saved{background:var(--rte-btn-on);color:var(--rte-save-ink);}
+    /* 同一颗按钮里放长短两段文案：桌面用完整写法，窄屏／触摸设备用短写法，靠媒体查询切换 */
+.rte-bar .rte-lbl-l{display:inline;}
+.rte-bar .rte-lbl-s{display:none;}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-save:hover{background:var(--rte-save-hover);}}
+.rte-bar .rte-clear{background:var(--rte-clear);color:var(--rte-clear-ink);}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-clear:hover{background:var(--rte-clear-hover);}}
+.rte-bar .rte-sev{width:1px;height:18px;background:var(--rte-line);margin:0 1px;}
+    /* 收藏卡的底色是暖的，工具栏本身不跟着换 —— 整排变金反而生分。
+           只有 B / I / U 按下去的那个状态给暖金，跟卡片呼应，其余保持原色。 */
+.card-item.favorited .rte-bar button.on{background:var(--rte-fav-on);color:var(--rte-fav-on-ink);}
+.rte-bar .rte-sp{flex:1 1 auto;}
+    /* 窄屏折两行：去掉伸缩占位（它会把「保存 / 清空」推到右边对不齐）、
+           切短文案、收紧间距，360～375px 稳稳排两行 */
+@media (max-width:700px),(pointer:coarse){.rte-bar{gap:4px;}
+.rte-bar button{padding:0 8px;}
+.rte-bar .rte-fmt{padding:0 8px;}
+.rte-bar .rte-sev{margin:0;}
+.rte-bar .rte-sp{display:none;}
+.rte-bar .rte-lbl-l{display:none;}
+.rte-bar .rte-lbl-s{display:inline;}}
+    /* 320px 这种小屏再收一档（gap 3 / 内边距 7 / 字号 11.5），保证也是两行 */
+@media (max-width:340px){.rte-bar{gap:3px;}
+.rte-bar button{padding:0 6px;font-size:11.5px;}
+.rte-bar .rte-fmt{padding:0 6px;font-size:12.5px;}
+    /* 「清除格式」在超小屏只留「清格式」三个字（emoji 收掉），省下的宽度刚好够排两行 */
+.rte-bar .rte-cf{font-size:0;}
+.rte-bar .rte-cf .rte-lbl-s{font-size:11.5px;}}
+    /* 编辑态被选中的图片：用 outline 画圈 —— outline 不占布局空间，
+           所以默认状态可以不留那 2px 透明边框，选中时画面也不会跳一下。 */
+.note-editor img.rte-sel{box-shadow:0 0 0 3px var(--rte-sel-ring);}
+    /* 富文本里的表格（笔记区原本没有表格样式，这里补上） */
+.note-editor table{border-collapse:collapse;width:100%;margin:6px 0;font-size:14px;line-height:1.55;}
+.note-editor th,.note-editor td{border:1px solid var(--rte-line);padding:5px 9px;min-width:40px;vertical-align:middle;}
+.note-editor th{background:var(--rte-code-bg);font-weight:600;text-align:left;}
+    /* 行内代码 / 代码块 / 引用块：与正文同一套观感，收藏态同样变暖 */
+.note-editor code{background:var(--rte-code-bg);padding:1px 6px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;}
+.note-editor pre{background:var(--rte-pre-bg);border:1px solid var(--rte-pre-line);border-radius:10px;padding:10px 12px;margin:.5em 0;overflow-x:auto;font-size:13px;line-height:1.6;white-space:pre;}
+.note-editor pre code{background:transparent;padding:0;}
+.note-editor blockquote{border-left:4px solid var(--rte-quote-line);padding-left:12px;margin:.5em 0;}
+.card-item.favorited .card-note-area .note-editor code{background:var(--rte-fav-code);}
+.card-item.favorited .card-note-area .note-editor pre{background:var(--rte-fav-pre);border-color:var(--rte-fav-line);}
+.card-item.favorited .card-note-area .note-editor blockquote{border-left-color:var(--rte-fav-line);}
+    /* 收藏态：笔记区表格跟着变暖（与外层米黄底一致） */
+.card-item.favorited .card-note-area .note-editor table th,.card-item.favorited .card-note-area .note-editor table td{border-color:var(--rte-fav-line);}
+.card-item.favorited .card-note-area .note-editor table th{background:var(--rte-fav-pre);}
+    /* 收藏态占位提示换暖色；占位规则带 !important，这里必须同力度才压得住 */
+.card-item.favorited .note-editor .note-placeholder{color:var(--rte-fav-placeholder) !important;}
+    /* 页面重置把 ul/ol 的默认缩进清掉了，这里补回来 */
+.note-editor ul, .note-editor ol { padding-left: 1.6em; margin: .4em 0; }
+.note-editor li { margin: .18em 0; }
+    /* 表格后面自动生成的空段落，保证至少有一行高，并且点空白处能把光标放进去 */
+.note-editor p.rte-after-tbl{min-height:1.6em;}
+.note-editor img{border-radius:10px;margin:6px 2px;}
+    /* 图片不带底色、边框、投影，就是一张干净的圆角图；选中态用阴影画圈。
+           透明边框会透出底色（收藏态米色底上最明显），所以全部清零。
+           这条按子页原有的选择器写，所有套用本脚本的页面统一生效。 */
+.card-note-area .note-editor img{background:transparent;border:0;  box-shadow:0 0 0 0 var(--rte-sel-ring-0);transition:box-shadow .18s ease;}
+    /* 原页面用 .selected 画选中圈（选择器比 .rte-sel 更长），这里同力度覆盖掉 */
+.card-note-area .note-editor img.selected{background:transparent;border:0;  box-shadow:0 0 0 3px var(--rte-sel-ring);}
+    /* 收藏态（米色底）跟着原页面换成金色 */
+.card-item.favorited .card-note-area .note-editor img.selected{  box-shadow:0 0 0 3px var(--rte-sel-ring-fav);}
+    /* 下划线粗细：这是浏览器默认值（偏细），可以用 text-decoration-thickness 调。
+           2px 偏粗，收回 1px；并加 text-decoration-skip-ink:none ——
+           浏览器默认会在 g / y / p 这类有下伸笔画的字母处「跳过」一段，中英文混排时
+           下划线看着就是断断续续的，关掉跳过即连成一条整线。 */
+.note-editor u,.note-editor span[style*="underline"]{text-decoration-thickness:1px;text-underline-offset:2px;text-decoration-skip-ink:none;-webkit-text-decoration-skip-ink:none;}
+    /* 笔记正文统一纯黑；占位符保持浅绿斜体（它自己的选择器更长，不会被这里盖掉） */
+.card-note-area .note-editor{color:var(--rte-ink);}
+.note-editor b,.note-editor strong{color:var(--rte-ink);}
+    /* 公式字号：行内 1.05em、块级 1.12em（再小分式就看不清）。
+           块级行高不能压到 1：那会把 ∂ / ∫ 这类上下伸展的符号裁掉。 */
+.note-editor .katex{font-size:1.05em;}
+.note-editor .katex-display>.katex{font-size:1.12em;line-height:1;padding:0.25em 0;}
+.note-editor .katex-display{margin:1px 0;overflow-x:auto;overflow-y:hidden;}
+    /* 粘贴进来的标题：浏览器默认 h1 是 2em（28px），在 14px 的笔记里大得离谱，
+           按同一套值收一档。 */
+.note-editor h1,.note-editor h2,.note-editor h3,.note-editor h4,.note-editor h5{color:var(--rte-head-ink);font-weight:700;line-height:1.45;margin:0.75em 0 0.3em 0;}
+.note-editor h1{font-size:15.5px;}
+.note-editor h2{font-size:15px;}
+.note-editor h3{font-size:14.8px;}
+.note-editor h4{font-size:14.6px;}
+.note-editor h5{font-size:14.2px;}
+    /* 从网页 / AI 回答粘贴进来的内容常自带内联颜色（多是各路墨绿），
+           内联样式优先级最高，会把笔记正文盖成「有的黑有的绿」。这里把正文元素的字色
+           统一压成中性黑 —— !important 才压得住内联样式。
+           例外：链接保持绿色、占位提示保持浅绿斜体（它们的选择器更长，不会被这里吃掉）。
+           公式 .katex 用 currentColor 取色，跟着变黑，不受影响。 */
+.note-editor :where(h1,h2,h3,h4,h5,h6,p,li,ul,ol,div,span,font,b,strong,em,i,u,s,blockquote,td,th){color:var(--rte-ink-forced) !important;}
+.note-editor :where(a){color:var(--rte-link) !important;}
+.note-editor .note-placeholder{color:var(--rte-placeholder) !important;}
+    /* 图片浮层预览 */
+.rte-viewer{display:none;position:fixed;inset:0;background:var(--viewer-overlay);z-index:9999;align-items:center;justify-content:center;overflow:hidden;}
+.rte-viewer.show{display:flex;}
+.rte-viewer img{max-width:none;max-height:none;border-radius:8px;cursor:grab;user-select:none;box-shadow:var(--viewer-img-shadow);transform-origin:center center;}
+.rte-viewer img.dragging{cursor:grabbing;}
+.rte-viewer-close{position:absolute;top:14px;right:16px;width:38px;height:38px;border-radius:50%;border:1px solid var(--viewer-close-line);background:var(--viewer-close-bg);color:var(--rte-paper);font-size:17px;cursor:pointer;font-family:inherit;}
+@media (hover:hover) and (pointer:fine){.rte-viewer-close:hover{background:var(--viewer-close-bg-hover);}}
+.rte-viewer-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:40px;background:var(--viewer-bar-bg);box-shadow:var(--viewer-bar-shadow);}
+    /* 浅绿底 + 深绿字，不做渐变和高光；悬停时底色深一点、浮起 1px 并落下阴影。 */
+.rte-viewer-bar button{width:32px;height:32px;border:none;border-radius:50%;cursor:pointer;background:var(--viewer-btn);color:var(--viewer-ink);font-size:15px;font-family:inherit;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:background .18s ease,box-shadow .18s ease,transform .12s ease;}
+    /* 悬停不向上跳，只把阴影收小一档；按下留一层很浅的内阴影（1px）当手感。 */
+@media (hover:hover) and (pointer:fine){.rte-viewer-bar button:hover{background:var(--viewer-btn-hover);box-shadow:0 3px 8px var(--viewer-shadow),0 1px 2px var(--viewer-shadow-soft);}}
+.rte-viewer-bar button:active{background:var(--viewer-btn-active);box-shadow:inset 0 1px 2px var(--viewer-inset);}
+.rte-viewer-bar button.txt{width:auto;border-radius:30px;padding:0 14px;font-size:12.5px;font-weight:600;background:var(--viewer-txt);}
+@media (hover:hover) and (pointer:fine){.rte-viewer-bar button.txt:hover{background:var(--viewer-txt-hover);}}
+.rte-viewer-bar button.txt:active{background:var(--viewer-txt-active);}
+.rte-viewer-bar .val{min-width:46px;text-align:center;font-size:12.5px;font-weight:600;color:var(--viewer-ink);font-variant-numeric:tabular-nums;}
+.rte-viewer-bar .vsep{width:1px;height:18px;background:var(--viewer-sep);}
+    /* 表格弹窗 */
+.rte-modal{display:none;position:fixed;inset:0;background:var(--modal-overlay);z-index:9998;align-items:center;justify-content:center;}
+.rte-modal.show{display:flex;}
+.rte-modal .box{background:var(--rte-paper);border-radius:16px;padding:20px 22px;min-width:270px;box-shadow:var(--modal-box-shadow);font-size:14px;color:var(--modal-ink);}
+.rte-modal .t{font-weight:700;font-size:15.5px;margin-bottom:14px;}
+.rte-modal .row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.rte-modal .row label{width:44px;color:var(--modal-label);}
+.rte-modal input[type=number]{flex:1;padding:6px 10px;border:1px solid var(--rte-line);border-radius:8px;font-size:14px;font-family:inherit;outline:none;color:var(--modal-ink);}
+.rte-modal input[type=number]:focus{border-color:var(--rte-focus);box-shadow:0 0 0 3px var(--rte-focus-ring);}
+.rte-modal .hint{font-size:11.5px;color:var(--modal-dim);margin-bottom:14px;}
+.rte-modal .acts{display:flex;gap:9px;justify-content:flex-end;}
+.rte-modal .acts button{border:none;border-radius:9px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;}
+.rte-modal .acts .ok{background:var(--modal-ok);color:var(--rte-paper);}
+.rte-modal .acts .no{background:var(--modal-no);color:var(--modal-no-ink);}
+    /* 尺寸条和弹窗里的按钮同样关掉手机点击高亮（否则也是一块蓝印子） */
+.rte-imgctl button,.imgctl button,.rte-modal button,.rte-viewer-bar button,.rte-viewer-close{-webkit-tap-highlight-color:transparent;touch-action:manipulation;outline:none;-webkit-user-select:none;user-select:none;}

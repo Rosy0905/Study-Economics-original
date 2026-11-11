@@ -1,0 +1,881 @@
+/* 页面骨架：页头、筛选栏、卡片列表、轻提示。
+   数值即基线，改动前先对照样式对照表。 */
+
+body {
+  font-family: var(--font-body);
+  background: var(--page-bg);
+  color: var(--page-fg);
+  padding: var(--page-pad);
+}
+
+/* ---- 页头 ---- */
+
+.app-header {
+  max-width: var(--page-max);
+  margin: 0 auto 20px auto;
+  background: var(--header-bg);
+  padding: var(--header-pad);
+  border-radius: var(--card-radius);
+  box-shadow: var(--header-shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.app-header h1 {
+  font-size: var(--header-title-size);
+  font-weight: 600;
+  color: var(--header-title);
+  letter-spacing: 0.5px;
+}
+
+/* 页头图标：emoji 直接跟着字号，图片与 svg 按一行的高度收 */
+.app-header h1 .page-title-icon { margin-right: 5px; }
+.app-header h1 img.page-title-icon { height: 1em; width: auto; vertical-align: -0.12em; }
+.app-header h1 svg.page-title-icon { height: 1em; width: 1em; vertical-align: -0.12em; }
+
+.app-header .stats {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  background: var(--stats-bg);
+  padding: var(--stats-pad);
+  border-radius: var(--radius-pill);
+  color: var(--stats-fg);
+  /* 统计条自己吃满剩下的空间、贴着右边。
+     否则 space-between 会把标题、开关、统计条三者均分，
+     一开自测多出「已学」那一格，统计条变宽就会把开关往左挤。 */
+  margin-left: auto;
+}
+
+.app-header .stats span {
+  font-weight: 500;
+}
+
+.app-header .stats .num {
+  color: var(--stats-num);
+  font-weight: 700;
+}
+
+.app-header .stats [hidden] {
+  display: none;
+}
+
+/* ---- 页头导航 ----
+   两个入口都按配置出现：主页不配返回键，没装答案册不配入口。 */
+
+.app-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 15px 7px 11px;
+  border-radius: 30px;
+  background: var(--back-bg);
+  color: var(--back-fg);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: var(--back-shadow);
+  transition: background .2s, box-shadow .2s;
+}
+
+.back-home .arrow {
+  font-size: 15px;
+  line-height: 1;
+  transition: transform .2s;
+}
+
+/* 悬停时按钮原地不动，只让箭头左移 —— 按钮整体漂移会带着标题一起抖 */
+@media (hover: hover) and (pointer: fine) {
+  .back-home:hover {
+    background: var(--back-hover);
+    box-shadow: var(--back-shadow-hover);
+  }
+  .back-home:hover .arrow { transform: translateX(-3px); }
+}
+
+.back-home:active { background: var(--back-hover); }
+
+/* 答案册入口：跟在标题之后，左侧一条细竖线与标题分开。
+   行高不写死，走默认值——这样文字行盒与左边的自测开关标签（同为 13.5px/600）
+   一样高，两个标签在同一行上的基线才是齐的。 */
+.answer-entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px 0 7px;
+  margin-left: 2px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--entry-fg);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  transition: background .18s, color .18s;
+}
+
+.answer-entry::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 1px;
+  height: 16px;
+  margin-top: -8px;
+  background: var(--entry-divider);
+}
+
+.answer-entry svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  opacity: .85;
+  margin-top: .6px;
+}
+
+.answer-entry .ae-txt { display: block; }
+
+@media (hover: hover) and (pointer: fine) {
+  .answer-entry:hover { background: var(--entry-hover-bg); color: var(--entry-hover-fg); }
+}
+
+.answer-entry:active { background: var(--entry-active-bg); }
+
+/* ---- 筛选栏 ---- */
+
+.filter-bar {
+  max-width: var(--page-max);
+  margin: 0 auto 20px auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-bar);
+  align-items: center;
+  background: var(--filter-bg);
+  padding: var(--filter-pad);
+  border-radius: 14px;
+  transition: opacity 0.3s;
+}
+
+.filter-bar.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 下拉由配置生成，外面套了一层 .dims 容器；display:contents 让它不参与 flex，
+   各栏与搜索框、按钮排在同一行。 */
+.filter-bar .dims {
+  display: contents;
+}
+
+.filter-bar label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--filter-label);
+}
+
+.filter-bar select,
+.filter-bar input {
+  padding: 6px 14px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  font-size: 14px;
+  color: var(--page-fg);
+  outline: none;
+}
+
+.filter-bar select:focus,
+.filter-bar input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
+
+/* 上级未选时下级锁住，半透明加禁止光标 */
+.filter-bar select:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* 搜索框吃掉剩余宽度。基准写 0，放不下时整行按 flex-wrap 自然折行；
+   手机端改成竖排时，0 的基准也不会被当成高度。 */
+.filter-bar .search-wrap {
+  flex: 1 1 0%;
+  min-width: 72px;
+}
+
+/* 搜索框 + 清除叉：与答案册 .search-reset 同款视觉（圆底 + 半透明 + 中性灰叉） */
+.search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.search-wrap input { width: 100%; padding-right: 32px; }
+.search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ab-search-btn-bg);
+  color: var(--ab-search-btn-fg);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+}
+.search-clear svg { width: 9px; height: 9px; display: block; }
+.search-clear.show { display: inline-flex; }
+
+.btn-soft {
+  background: var(--btn-soft-bg);
+  border: none;
+  padding: 6px 18px;
+  border-radius: var(--radius-btn);
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--btn-soft-fg);
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-random {
+  background: var(--btn-random-bg);
+  border: none;
+  padding: 6px 22px;
+  border-radius: var(--radius-btn);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--btn-random-fg);
+  font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-random:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-soft:hover { background: var(--btn-soft-hover); }
+  .btn-random:hover { background: var(--btn-random-hover); transform: scale(1.02); }
+}
+
+/* ---- 卡片列表 ---- */
+
+.card-grid {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap-grid);
+}
+
+.card-item {
+  background: var(--card-bg);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border-left: var(--card-border-w) solid var(--card-border);
+  transition: box-shadow 0.25s, transform 0.15s, border-color 0.3s;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 抽查模式：只留一张卡，栅格收窄、投影加重、左侧色条加粗 */
+.card-grid.single-mode {
+  max-width: var(--single-max);
+}
+
+.card-grid.single-mode .card-item {
+  box-shadow: var(--card-shadow-single);
+  border-left-width: var(--card-border-w-single);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-item:hover { box-shadow: var(--card-shadow-hover); }
+}
+
+.card-item.favorited {
+  border-left-color: var(--fav-border);
+  background: var(--fav-bg);
+}
+
+.card-item.favorited .toggle-hint { color: var(--fav-hint-fg); opacity: 0.9; }
+.card-item.favorited .card-header .label .qid { color: var(--fav-qid-fg); }
+.card-item.favorited .card-question { color: var(--fav-answer-fg); }
+.card-item.favorited .tag,
+.card-item.favorited .tag-blue,
+.card-item.favorited .tag-sand { background: var(--fav-tag-bg); color: var(--fav-tag-fg); }
+.card-item.favorited .answer-inner { background: var(--fav-answer-bg); color: var(--fav-answer-fg); }
+.card-item.favorited .answer-inner strong { color: var(--fav-strong-fg); }
+.card-item.favorited .answer-inner p.fm { color: var(--fav-answer-fg); }
+body[data-preset='tinted'] .card-item.favorited .answer-inner p.fm {
+  background: var(--fav-formula-bg);
+}
+/* 收藏态要把答案区里每一处绿色都换成暖色，漏一处就会在暖底上留一块绿 */
+.card-item.favorited .answer-inner p.detail { border-top: var(--fav-detail-rule); }
+.card-item.favorited .answer-inner p.fig { background: var(--fav-fig-bg); color: var(--fav-fig-fg); }
+.card-item.favorited .answer-inner th { background: var(--fav-table-head-bg); color: var(--fav-table-head-fg); }
+.card-item.favorited .answer-inner table { background: var(--fav-table-bg); color: var(--fav-table-fg); border-color: var(--fav-table-border); }
+.card-item.favorited .answer-inner th,
+.card-item.favorited .answer-inner td { border-color: var(--fav-table-cell-border); }
+.card-item.favorited .answer-inner td.rh { background: var(--fav-table-rh-bg); color: var(--fav-table-head-fg); }
+/* 自测遮罩也一起转暖：虚线框和底下那层半透明底若仍是绿色，
+   压在暖色答案区上会突兀，收藏态单独换一套色。 */
+.card-item.favorited .st-cover {
+  background: var(--fav-cover-bg);
+  border-color: var(--fav-cover-border);
+}
+
+/* ---- 卡片头部 ---- */
+
+.card-header {
+  padding: 16px var(--card-pad-x) 8px var(--card-pad-x);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-header .label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--label-gap);
+}
+
+.tag {
+  background: var(--tag-bg);
+  padding: 2px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tag-fg);
+  white-space: nowrap;
+}
+
+/* 头部第二个及以后的徽标按字段给色：套卷蓝、题型沙，一眼分得清是哪一层。
+   第一枚永远是主色，跟普通子页的章节徽标同一档。
+   副徽标比主徽标左右各窄一档，一行里主次分明。 */
+.tag-blue {
+  background: var(--tag-blue-bg);
+  color: var(--tag-blue-fg);
+  padding: 2px 12px;
+  font-weight: 600;
+}
+
+.tag-sand {
+  background: var(--tag-sand-bg);
+  color: var(--tag-sand-fg);
+  padding: 2px 12px;
+  font-weight: 600;
+}
+
+/* 说明类卡片（variant: note）：整卡换一套冷色，与题目卡区分开 */
+.card-item.variant-note {
+  background: var(--note-card-bg);
+  border-left-color: var(--note-card-border);
+}
+
+.card-item.variant-note .card-question {
+  color: var(--note-card-fg);
+}
+
+/* 真题说明卡的题目用中性黑，与其余说明卡的冷蓝青分开。
+   题库页装配时会在 body 上标 data-answer-mode=book，用它区分即可。 */
+body[data-answer-mode='book'] .card-item.variant-note .card-question {
+  color: #2b2b2b;
+}
+
+/* 说明卡两枚徽标的常色：第一枚浅蓝、第二枚沙色。收藏态另有一套暖色，
+   所以常色规则把收藏卡排除在外，免得跟收藏态抢优先级。 */
+.card-item.variant-note:not(.favorited) .card-header .label .tag:not(.tag-blue):not(.tag-sand) {
+  background: var(--note-tag-bg);
+  color: var(--note-tag-fg);
+}
+
+.card-item.variant-note:not(.favorited) .card-header .label .tag-blue {
+  background: var(--tag-sand-bg);
+  color: var(--tag-sand-fg);
+}
+
+.card-item.variant-note.favorited {
+  background: var(--fav-bg);
+  border-left-color: var(--fav-border);
+}
+
+/* 说明卡收藏后两枚徽标一起转暖，跟既有站点一致 */
+.card-item.variant-note.favorited .card-header .label .tag {
+  background: var(--fav-tag-bg);
+  color: var(--fav-tag-fg);
+}
+
+/* 说明卡展开后的下半截。缺这一组时，卡收起是蓝的、点开又回绿白，
+   像两张卡拼在一起；3 页与 7 页的原版是把整套一起换掉的。
+   收藏态不在这里管：下面的 --fav-* 通用规则会接住，且优先级更高。 */
+.card-item.variant-note:not(.favorited) .card-header .label .qid {
+  color: var(--note-qid-fg);
+}
+
+.card-item.variant-note:not(.favorited) .toggle-hint {
+  color: var(--note-hint-fg);
+}
+
+/* 编辑态不铺这个底。虚线框是画在 .answer-inner 自己身上的，
+   底下再垫一层浅蓝，卡片里就会多出一块颜色，跟题目区对不上；
+   让卡片自身的底透出来，跟普通卡进编辑时是同一个观感。 */
+.card-item.variant-note:not(.favorited) .answer-inner:not(.editable) {
+  background: var(--note-answer-bg);
+}
+
+.card-item.variant-note:not(.favorited) .answer-inner {
+  color: var(--note-answer-fg);
+}
+
+.card-item.variant-note:not(.favorited) .answer-inner strong {
+  color: var(--note-strong-fg);
+}
+
+/* 公式字色三款都换；浅蓝底只在带底款给，
+   素白与 LaTeX 款保持无底，公式位置由 data-formula-align 决定。 */
+.card-item.variant-note:not(.favorited) .answer-inner p.fm {
+  color: var(--note-formula-fg);
+}
+
+body[data-preset='tinted'] .card-item.variant-note:not(.favorited) .answer-inner p.fm {
+  background: var(--note-formula-bg);
+}
+
+.card-item.variant-note:not(.favorited) .answer-inner p.fig {
+  background: var(--note-fig-bg);
+  color: var(--note-fig-fg);
+}
+
+.label .qid {
+  font-weight: 600;
+  font-size: var(--qid-size);
+  color: var(--qid-fg);
+}
+
+.label .has-img {
+  background: var(--hasimg-bg);
+  color: var(--hasimg-fg);
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.card-actions button {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+  color: var(--card-action-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-actions button:hover { background: var(--card-action-hover-bg); transform: scale(1.05); }
+}
+
+.card-actions .btn-fav { color: var(--fav-btn-fg); }
+.card-actions .btn-fav.active { color: var(--fav-border); }
+.card-actions .btn-note { color: var(--note-btn-fg); }
+.card-actions .btn-note.active { color: var(--note-btn-active-fg); }
+
+/* 答案册深链：卡片右上的 📖。是个链接不是按钮（新窗口打开），
+   所以单独给一套规则，尺寸与同排按钮对齐。 */
+.card-actions .btn-ans {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border-radius: 10px;
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--card-action-fg);
+  background: transparent;
+  transition: background 0.15s, transform 0.1s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-actions .btn-ans:hover { background: var(--card-action-hover-bg); transform: scale(1.05); }
+}
+
+.card-actions .btn-ans:active { background: var(--card-action-active-bg); transform: scale(0.94); }
+
+/* ---- 题目 ---- */
+
+.card-question {
+  padding: 6px var(--card-pad-x) var(--q-pad-b) var(--card-pad-x);
+  font-size: var(--q-size);
+  line-height: var(--q-line);
+  color: var(--q-fg);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.card-question .q-text {
+  display: inline;
+  white-space: pre-wrap;
+}
+
+/* 题干里的公式：字号跟题干同一档。
+   KaTeX 默认按 1.21em 放大，题干只有 15.5px，放上去会比正文明显胖一圈，
+   这里压回 1em；块级公式前后留一点空气，不吃满整行。 */
+.card-question .q-text .katex { font-size: 1em; }
+
+.card-question .q-text .katex-display {
+  font-size: 1em;
+  margin: .45em 0;
+}
+
+/* 行首 $$ 的整行公式（unicode 款）：独占一行、用数学字体，不加任何底色。
+   题干是白底，压色块只会显脏；长公式允许横向滚动，不撑破卡片。 */
+.card-question .q-text .q-fm {
+  display: block;
+  font-family: var(--font-math);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin: .2em 0;
+  color: var(--q-fg);
+}
+
+/* 题库类页面（答案在答案册）与普通子页共用同一套题干数值，字号、行高、
+   下内边距、徽标间距一处不改；这里只换排版方式——题干整块排、长词强制断行，
+   展开提示因此另起一行。 */
+body[data-answer-mode='book'] .card-question .q-text {
+  display: block;
+  word-break: break-word;
+}
+
+/* 题干里的表格：白底、边框取题干正文字色，宽了在框内横向滑动。
+   尺寸跟答案区共用一组变量，只保留边框与表头的颜色差别。 */
+.card-question .tb-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: .5em 0 .6em 0;
+  padding-bottom: 2px;
+  cursor: auto;
+}
+
+.card-question .tb-wrap::-webkit-scrollbar { height: 5px; }
+
+.card-question .tb-wrap::-webkit-scrollbar-thumb {
+  background: var(--q-table-scroll);
+  border-radius: 3px;
+}
+
+.card-question table {
+  border-collapse: collapse;
+  margin: 0 auto;
+  max-width: none;
+  font-size: var(--card-table-size);
+  line-height: var(--card-table-line);
+  color: var(--q-fg);
+  background: var(--card-bg);
+  border: 1px solid var(--q-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-question th,
+.card-question td {
+  border: 1px solid var(--q-fg);
+  padding: var(--card-table-pad);
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.card-question th {
+  background: var(--card-bg);
+  font-weight: 600;
+  color: var(--q-fg);
+}
+
+.card-question td.rh {
+  background: var(--card-bg);
+  color: var(--q-fg);
+  font-weight: 500;
+}
+
+.toggle-hint {
+  font-size: 13px;
+  color: var(--hint-fg);
+  margin-left: 10px;
+  font-weight: 400;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* ---- 答案 ---- */
+
+.card-answer {
+  padding: 0 var(--card-pad-x) 6px var(--card-pad-x);
+  display: none;
+}
+
+.card-answer.open {
+  display: block;
+}
+
+/* 淡入只在点开答案时触发：重绘会重建列表，若不收住，
+   筛选一次就整片卡片一起淡入（原版重绘后不保留展开态，所以不出现这个现象） */
+.card-item.just-opened .card-answer {
+  animation: fadeSlide 0.3s ease;
+}
+
+@keyframes fadeSlide {
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- 空状态与页脚 ---- */
+
+.empty {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  text-align: center;
+  padding: 38px 20px;
+  /* 两种空态统一高度并垂直居中：搜不到时的提示、模块还没有数据时的提示。
+     两者内容差一行，牌子高度不变。 */
+  min-height: 224px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--empty-fg);
+  font-size: 17px;
+  background: var(--empty-bg);
+  border-radius: 24px;
+}
+
+.empty[hidden] {
+  display: none;
+}
+
+.empty .es-illu {
+  width: 88px;
+  height: 88px;
+  display: block;
+  margin: 0 auto 8px;
+}
+.empty .empty-main {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--empty-fg);
+  line-height: 1.7;
+}
+.empty .empty-sub {
+  font-size: 13px;
+  color: var(--empty-sub-fg);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.footer-note {
+  max-width: var(--page-max);
+  margin: 30px auto 10px auto;
+  text-align: center;
+  font-size: 12px;
+  color: var(--footer-fg);
+  border-top: 1px solid var(--footer-rule);
+  padding-top: 18px;
+}
+
+/* ---- 抽查模式条 ---- */
+
+.single-mode-bar {
+  max-width: var(--page-max);
+  margin: 0 auto 16px auto;
+  background: var(--single-bar-bg);
+  border: 2px solid var(--single-bar-border);
+  border-radius: 14px;
+  padding: 8px 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  animation: fadeSlide 0.3s ease;
+}
+
+.single-mode-bar.show { display: flex; }
+
+.single-mode-bar .mode-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.single-mode-bar .btn-nav {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 8px;
+  color: var(--single-nav-fg);
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.single-mode-bar .btn-nav.disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.single-mode-bar .card-id-badge {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--single-badge-fg);
+  background: var(--single-badge-bg);
+  padding: 4px 18px;
+  border-radius: 30px;
+  white-space: nowrap;
+}
+
+.single-mode-bar .mode-hint {
+  font-size: 13px;
+  color: var(--single-hint-fg);
+  margin-left: 4px;
+}
+
+.single-mode-bar .btn-exit-single {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 8px;
+  color: var(--single-exit-fg);
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .single-mode-bar .btn-nav:hover { background: var(--single-nav-hover); transform: scale(1.05); }
+  .single-mode-bar .btn-exit-single:hover { background: var(--single-exit-hover); transform: scale(1.05); }
+}
+
+.single-mode-bar .btn-nav:active { transform: scale(0.92); }
+.single-mode-bar .btn-exit-single:active { transform: scale(0.92); }
+
+/* ---- 滚动条 ---- */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--scroll-track); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 10px; }
+
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+}
+
+/* ---- 窄屏 ---- */
+
+@media (max-width: 640px) {
+  :root {
+    --card-pad-x: 16px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 18px;
+  }
+
+  .app-header h1 { font-size: 20px; }
+
+  .app-header .header-left { gap: 10px; }
+  .back-home { padding: 6px 13px 6px 10px; font-size: 12.5px; }
+
+  /* 三项统计在 360px 宽的屏上并排会挤，允许折行；
+     窄屏下药丸满行、内容贴左 —— 清掉桌面那条贴右的 auto 边距 */
+  .app-header .stats {
+    margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* 抽查条竖排居中：卡片标题是「章节 · 小题号」，一行放不下 ◀ ▶ 与退出键 */
+  .single-mode-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 10px 14px;
+  }
+
+  .single-mode-bar .mode-left {
+    justify-content: center;
+  }
+
+  .card-header { padding: 14px var(--card-pad-x) 4px var(--card-pad-x); }
+  .card-question { padding: 4px var(--card-pad-x) 12px var(--card-pad-x); font-size: 14.5px; }
+  .card-note-area { padding: 0 var(--card-pad-x) 14px var(--card-pad-x); }
+  .card-answer { padding: 0 var(--card-pad-x) 6px var(--card-pad-x); }
+  .answer-inner { padding: 14px 16px; font-size: 14px; }
+
+  /* 手机上抽查卡本来就占满屏宽，不用再收窄 */
+  .card-grid.single-mode { max-width: 100%; }
+}
+
+/* 抽查模式在手机上把页头压成一行、藏掉统计和筛选栏，让抽查条和卡片一屏可见 */
+@media (max-width: 768px) {
+  body.single-on .app-header { padding: 8px 14px; margin-bottom: 10px; }
+  body.single-on .app-header h1 { font-size: 17px; }
+  body.single-on .app-header .stats { display: none; }
+  body.single-on .filter-bar { display: none; }
+  body.single-on .single-mode-bar { margin-bottom: 10px; }
+}
+
+/* ---- 自测档位的左侧竖条 ----
+   写在收藏态之后，收藏卡在自测里也能看出标记；
+   三条规则与收藏态同样特异性，靠加载顺序取胜。 */
+body.st-on .card-item.st-ok { border-left-color: var(--st-ok-bar); }
+body.st-on .card-item.st-meh { border-left-color: var(--st-meh-bar); }
+body.st-on .card-item.st-no { border-left-color: var(--st-no-bar); }
