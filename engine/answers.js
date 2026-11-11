@@ -43,6 +43,16 @@
     var c = config || {};
     var P = c.project || global.PROJECT_CONFIG || {};
     var A = c.answer || global.ANSWER_CONFIG || {};
+
+    /* 自测三档叫法可由项目配置覆盖，没配用默认「会了／模糊／忘了」。
+       CHIPS 与子页 selftest.js 同源，改一处两处都变。 */
+    var SL = (P.selftestLabels) || {};
+    ['ok', 'meh', 'no'].forEach(function (k) {
+      if (SL[k] != null) {
+        var chip = chipOf(k);
+        if (chip) { chip.label = SL[k]; chip.word = SL[k]; }
+      }
+    });
     var book = c.book || global.ANSWER_BOOK || {};
     var papers = book.papers || [];
 

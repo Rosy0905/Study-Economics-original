@@ -4,8 +4,8 @@
 
 /* ===== 浮动按钮 ===== */
 .ai-fab{
-  position:fixed;right:22px;bottom:22px;z-index:900;
-  width:58px;height:58px;border-radius:50%;
+  position:fixed;right:var(--fab-right);bottom:var(--fab-bottom);z-index:900;
+  width:var(--fab-size);height:var(--fab-size);border-radius:50%;
   cursor:pointer;background:var(--ai-c001);
   border:2.5px solid var(--ai-c002);
   box-shadow:0 3px 10px var(--ai-c003);
@@ -30,7 +30,7 @@
 .ai-fab.hidden{opacity:0;pointer-events:none;transform:scale(.5);}
 
 /* ===== 面板 ===== */
-.ai-panel{position:fixed;right:22px;bottom:22px;z-index:950;width:var(--ai-panel-w, min(440px,calc(100vw - 32px)));height:var(--ai-panel-h, min(660px,calc(100vh - 44px)));background:var(--ai-c008);border-radius:20px;box-shadow:0 20px 60px var(--ai-c009),0 0 0 1px var(--ai-c010);display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(20px) scale(.96);transition:opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .18s ease;}
+.ai-panel{position:fixed;right:var(--fab-right);bottom:var(--fab-bottom);z-index:950;width:var(--ai-panel-w, min(440px,calc(100vw - 32px)));height:var(--ai-panel-h, min(660px,calc(100vh - 44px)));background:var(--ai-c008);border-radius:20px;box-shadow:0 20px 60px var(--ai-c009),0 0 0 1px var(--ai-c010);display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(20px) scale(.96);transition:opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .18s ease;}
 .ai-panel.show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
 /* 关闭态一律不接点击：手机端部分子元素显式设了 pointer-events:auto，面板透明后
    仍会在页面上留下看不见却能触发操作的热点。交互浮层均挂在 body 下，不受此约束。 */
@@ -419,7 +419,8 @@ body.shared-ai-view .ai-close{display:none;}
 .ai-lightbox img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px var(--ai-c127);background:var(--ai-c008);}
 
 @media (max-width:640px){
-  .ai-fab{right:16px;bottom:16px;width:52px;height:52px;border-width:2px;}
+  :root{--fab-right:16px;--fab-bottom:16px;--fab-size:52px;}
+  .ai-fab{border-width:2px;}
   .ai-fab::before{inset:4px;}
   .ai-fab svg{width:21px;height:21px;}
   .ai-panel{

@@ -17,6 +17,12 @@
   var JITTER = 2; /* 小于这个位移算抖动，不判方向 */
 
   function mount() {
+    /* 返回顶部开关：features.topBtn 为 false 时不挂载（默认显示）。
+       与全站其它功能开关同一套判定，读 PROJECT_CONFIG.features。 */
+    var P = global.PROJECT_CONFIG || {};
+    var FEAT = P.features || {};
+    if (FEAT.topBtn === false) return null;
+
     if (document.getElementById('toTop')) return null;
 
     var btn = document.createElement('button');

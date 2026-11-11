@@ -8,13 +8,12 @@
    --totop-shadow-hover 悬停投影。 */
 #toTop {
   --totop-size: 38px;
-  --totop-right: 32px;
-  --totop-bottom: 104px;
-  /* 颜色四个变量在 tokens.css 的 --totop-* 里，跟主题一起变 */
+  /* 颜色四个变量在 tokens.css 的 --totop-* 里，跟主题一起变；
+     位置与 AI 助手按钮共用 --fab-* 几何变量，保证箭头始终在按钮正上方且中心对齐 */
 
   position: fixed;
-  right: var(--totop-right);
-  bottom: var(--totop-bottom);
+  right: calc(var(--fab-right) + (var(--fab-size) - var(--totop-size)) / 2);
+  bottom: calc(var(--fab-bottom) + var(--fab-size) + var(--fab-top-gap));
   z-index: 890;
   width: var(--totop-size);
   height: var(--totop-size);

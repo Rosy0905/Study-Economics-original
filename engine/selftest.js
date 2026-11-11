@@ -20,6 +20,13 @@
     { key: 'none', label: '未测', cls: 'c-left' }
   ];
 
+  /* 自测三档叫法：项目配置 selftestLabels 可覆盖，没配用「会了／模糊／忘了」。
+     子页（本文件）与答案册（answers.js）共用同一份配置，改一处两处都变。 */
+  function labels() {
+    var L = (global.PROJECT_CONFIG && global.PROJECT_CONFIG.selftestLabels) || {};
+    return { ok: L.ok || '会了', meh: L.meh || '模糊', no: L.no || '忘了' };
+  }
+
   var cfg = null;
   var on = false;
   var chip = 'all';
@@ -92,11 +99,16 @@
   function buildBar() {
     barEl = document.createElement('div');
     barEl.className = 'st-bar';
+    var L = labels();
     barEl.innerHTML = CHIPS.map(function (c) {
+      var lbl = c.label;
+      if (c.key === 'ok') lbl = L.ok;
+      else if (c.key === 'meh') lbl = L.meh;
+      else if (c.key === 'no') lbl = L.no;
       return (
         '<button type="button" class="st-chip ' + c.cls +
         (c.key === chip ? ' sel' : '') +
-        '" data-f="' + c.key + '">' + c.label + '<b>0</b></button>'
+        '" data-f="' + c.key + '">' + lbl + '<b>0</b></button>'
       );
     }).join('');
 
@@ -214,10 +226,11 @@
     var rate = document.createElement('div');
     rate.className = 'st-rate';
     rate.dataset.id = id;
+    var L = labels();
     rate.innerHTML =
-      '<button type="button" class="st-b-ok">会了</button>' +
-      '<button type="button" class="st-b-meh">模糊</button>' +
-      '<button type="button" class="st-b-no">忘了</button>' +
+      '<button type="button" class="st-b-ok">' + L.ok + '</button>' +
+      '<button type="button" class="st-b-meh">' + L.meh + '</button>' +
+      '<button type="button" class="st-b-no">' + L.no + '</button>' +
       (answer ? '<button type="button" class="st-b-view">查看答案</button>' : '');
 
     anchor.parentNode.insertBefore(rate, anchor.nextSibling);

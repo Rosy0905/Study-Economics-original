@@ -1418,6 +1418,11 @@ body[data-preset='latex'] {
   --totop-ring: rgba(94, 201, 154, 0.6);
   --totop-shadow: 0 2px 4px rgba(120, 210, 180, 0.3);
   --totop-shadow-hover: 0 3px 7px rgba(120, 210, 180, 0.5);
+  /* 浮动按钮几何：AI 助手按钮与返回顶部箭头共用，保证箭头始终在按钮正上方且中心对齐 */
+  --fab-right: 22px;
+  --fab-bottom: 22px;
+  --fab-size: 58px;
+  --fab-top-gap: 18px;
 }
 
 /* 搜索跳转遮罩：engine/search-jump.js 注入的样式从这里取色 */
