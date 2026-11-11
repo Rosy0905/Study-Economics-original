@@ -397,7 +397,7 @@
           parts.push('偏大，建议去掉对话历史再导');
         }
 
-        expSize.innerHTML = '预计文件大小约 <b>' + esc(fmtBytes(bytes)) + '</b> · ' + esc(parts.join(' · '));
+        expSize.innerHTML = '预计文件大小约 <b>' + esc(fmtBytes(bytes)) + '</b>';
         expSize.classList.toggle('over', heavy);
       }
 
