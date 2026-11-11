@@ -113,6 +113,13 @@
     try { B().syncNoteRefs(oldHtml, newHtml); } catch (e) {}
   }
 
+  /* 收回一张图：仅当全站没有任何正文引用它时才删，避免误删共享图 */
+  function reclaim(id) {
+    if (!usable() || !id) return Promise.resolve(false);
+    if (B().refsAll()[id]) return Promise.resolve(false);
+    return B().del(id);
+  }
+
   function bytesOf(img) { return usable() ? B().bytesOf(img) : 0; }
 
   /* 把 idb: 引用换成可直接给 <img> 的地址，看大图时用 */
@@ -180,6 +187,7 @@
     adoptInline: adoptInline,
     commit: commit,
     reconcile: reconcile,
+    reclaim: reclaim,
     bytesOf: bytesOf,
     urlFor: urlFor,
     exportRefs: exportRefs,

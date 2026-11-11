@@ -91,11 +91,31 @@
                 KB.ImgCtl.setRatio(img, KB.ImgCtl.insertRatio(o.editor, img.__pxW));
             };
             probe.src = ev.target.result;
-            KB.ImgCtl.shrink(img, ev.target.result).then(function () { return KB.ImgCtl.store(img); });
+            KB.ImgCtl.shrink(img, ev.target.result).then(function () { return KB.ImgCtl.store(img); }).then(function (id) {
+                if (id && o.editor) {
+                    o.editor.__pendingBlobs = o.editor.__pendingBlobs || [];
+                    o.editor.__pendingBlobs.push(id);
+                }
+            });
             o.insert(img);
             if (o.tip) o.tip();
         };
         reader.readAsDataURL(file);
+    }
+
+    /* 放弃编辑时回收本次临时插入、最终没被正文引用的图。
+       已落库的图有正文引用，reclaim 内部的 refsAll 会拦住，不会误删；
+       只有真的孤儿（插了没保存）才删。 */
+    function discardPending(editor) {
+        if (!editor || !editor.__pendingBlobs || !editor.__pendingBlobs.length) return;
+        var ids = editor.__pendingBlobs;
+        editor.__pendingBlobs = [];
+        ids.forEach(function (id) {
+            if (KB.ImageStore && KB.ImageStore.reclaim) KB.ImageStore.reclaim(id);
+        });
+    }
+    function flushPending(editor) {
+        if (editor) editor.__pendingBlobs = [];
     }
 
     /* 整段 Markdown 转 HTML。页面差异只剩两个口径：段落换行与空引用行是否保留 */
@@ -277,6 +297,8 @@
         liveCaretIsBogus: liveCaretIsBogus,
         syncFormatButtons: syncFormatButtons,
         readAndInsertImage: readAndInsertImage,
+        discardPending: discardPending,
+        flushPending: flushPending,
         sanitizePastedHtml: sanitizePastedHtml
     };
 })(window);

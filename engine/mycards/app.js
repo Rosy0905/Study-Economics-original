@@ -1160,6 +1160,7 @@
     }
 
     function closeEditor() {
+        if (KB.Editor && KB.Editor.discardPending) KB.Editor.discardPending(answerEditor);
         editorOverlay.classList.remove('show');
         if (!anyOverlayOpen()) lockBody(false);
         clearImgSelection();

@@ -85,6 +85,7 @@
     var has = KB.UserData.setNote(id, next);
     /* 保存后对账：正文里删掉的图，图床里跟着清掉 */
     if (KB.Blobs) KB.Blobs.syncNoteRefs(oldRaw, next);
+    if (KB.Editor && KB.Editor.flushPending) KB.Editor.flushPending(editor);
 
     /* 老笔记里还留着内联图时补一次票：图搬进图床、正文换引用。
        先按原样落盘保证不丢字，补票回来只在内容没再变过时替换；
@@ -136,6 +137,8 @@
       KB.UserData.clearNote(id);
       /* 清空后正文里引用的图在图床里也一并清掉 */
       if (KB.Blobs) KB.Blobs.syncNoteRefs(oldRaw, '');
+      var ed = card.querySelector('.note-editor');
+      if (KB.Editor && KB.Editor.discardPending) KB.Editor.discardPending(ed);
       card.querySelector('.note-editor').innerHTML = '';
       syncEmpty(card.querySelector('.note-editor'));
       card.querySelector('.btn-note').classList.remove('active');
