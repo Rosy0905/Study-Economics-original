@@ -269,7 +269,7 @@
 
       emptyEl.hidden = list.length > 0;
       /* 空状态：筛选无结果用 A（绿色放大镜插画），模块为空用 ③（空白页+笔）；
-         文案保持原版，仅去掉原 🌿、换成插画。我的卡片页不在此文件，不受影响。 */
+         文案保持原版，表情符号换成插画。我的卡片页不在此文件，不受影响。 */
       if (cards.length) {
         emptyEl.innerHTML =
           '<svg class="es-illu" viewBox="0 0 120 120" aria-hidden="true">' +

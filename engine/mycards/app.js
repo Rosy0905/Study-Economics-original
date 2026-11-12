@@ -728,7 +728,7 @@
                       '<span class="empty-main">还没有任何卡片</span>' +
                       '<span class="sub">点击「新建卡片」开始记录吧</span>' +
                   '</div>'
-                : '<div class="no-result"><span class="empty-main">🌿 没有找到匹配的卡片，试试调整筛选条件吧</span></div>';
+                : '<div class="no-result"><span class="empty-main">没有找到匹配的卡片，试试调整筛选条件吧</span></div>';
             return;
         }
 
