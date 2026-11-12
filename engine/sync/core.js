@@ -340,63 +340,22 @@
       function refreshSize() {
         if (!expSize) return;
         var data = exportData || collectLocal();
-        var counts = bucketCounts(data);
         var picked = pickData(data);
         var bytes = 0;
-        var hisBytes = 0;
-        var hisImgs = 0;
         Object.keys(picked).forEach(function (k) {
-          var one = roughBytes(k) + roughBytes(picked[k]);
-          bytes += one;
-          if (bucketOf(k) !== 'aiHistory') return;
-          hisBytes += one;
-          /* 对话历史里的图是内联 base64，不走图床，也不进「图片 N 张」的统计。
-             这里单独数一次，导出前能看清它到底占了多少 */
-          try {
-            var arr = JSON.parse(picked[k]);
-            if (Array.isArray(arr)) {
-              arr.forEach(function (m) {
-                if (!m || !m.attachments || !m.attachments.length) return;
-                m.attachments.forEach(function (a) { if (a && a.dataUrl) hisImgs++; });
-              });
-            }
-          } catch (e) {}
+          bytes += roughBytes(k) + roughBytes(picked[k]);
         });
 
+        /* 勾选带图且图床读完时把图片字节折算进预计体积，base64 膨胀约 1/3 */
         var want = !expImages || expImages.checked;
-        var parts = ['学习数据 ' + counts.study + ' 条'];
-        /* 被排除的那类写「已排除」，比直接消失更清楚，不然会以为统计漏了 */
-        if (counts.aiConfig) {
-          parts.push(expConfig && !expConfig.checked ? 'AI 配置已排除' : 'AI 配置 ' + counts.aiConfig + ' 条');
-        }
-        if (counts.aiHistory) {
-          parts.push(expHistory && !expHistory.checked
-            ? '对话历史已排除'
-            : '对话历史 ' + counts.aiHistory + ' 条，约 ' + fmtBytes(hisBytes) + (hisImgs ? '，内含图片 ' + hisImgs + ' 张' : ''));
-        }
-
-        /* 先判图床状态再判勾选：图床不可用时勾选是被强制取消的，
-           报「不含图片」会让人以为是自己取消的 */
-        if (imgState === 'loading') {
-          parts.push('图片统计中…');
-        } else if (imgState === 'off') {
-          parts.push('图片读取不可用');
-        } else if (!want) {
-          parts.push('不含图片');
-        } else {
-          var n = (imgEntries || []).length;
+        if (want && imgState !== 'loading' && imgState !== 'off') {
           var imgBytes = 0;
           (imgEntries || []).forEach(function (it) { imgBytes += (it.blob && it.blob.size) || 0; });
-          bytes += Math.round(imgBytes * 1.37);   /* base64 膨胀约 1/3 */
-          parts.push(n ? '图片 ' + n + ' 张' : '无图片');
+          bytes += Math.round(imgBytes * 1.37);
         }
 
-        /* 超过 8MB 基本是带图历史撑着，微信分段会远超硬上限，导出前先说一句 */
+        /* 8MB 以上给体积一行标红，避免微信分段导出时才发现太胖 */
         var heavy = bytes > 8 * 1024 * 1024;
-        if (heavy && counts.aiHistory && (!expHistory || expHistory.checked)) {
-          parts.push('偏大，建议去掉对话历史再导');
-        }
-
         expSize.innerHTML = '预计文件大小约 <b>' + esc(fmtBytes(bytes)) + '</b>';
         expSize.classList.toggle('over', heavy);
       }

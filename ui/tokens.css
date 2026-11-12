@@ -1382,15 +1382,7 @@ body[data-preset='latex'] {
   --ss-132: #8aa992;
 }
 
-/* 主页真题模块的答案册入口（浅紫描边款） */
-:root {
-  --home-answer-bg: #F7EFFB;
-  --home-answer-line: #C096DD;
-  --home-answer-ink: #7B4FA6;
-  --home-answer-bg-hover: #EFE4FA;
-  --home-answer-line-hover: #9B6BC4;
-  --home-answer-ink-hover: #6B3F96;
-}
+/* 答案册入口配色由主页按模块主色派生，不在全站固定 */
 
 /* 板块导航：序号圆钮与弹出面板。底色与「← 主页」同族，随主题走 */
 :root {

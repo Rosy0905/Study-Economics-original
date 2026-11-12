@@ -91,15 +91,15 @@ body {
 .mod-wrap { position: relative; }
 .mod-wrap > .mod { height: 100%; }
 
-/* 右上角答案册入口：比底栏「N 张」计数再收一档，hover 只加深底色与描边 */
+/* 右上角答案册入口：底色、描边、文字三档都随所属模块主色派生，不在全站写死 */
 .mod-answer {
   position: absolute; top: 16px; right: 16px; z-index: 2;
   display: inline-flex; align-items: center; gap: 3px;
   padding: 2px 7px;
-  border: 1px solid var(--home-answer-line);
+  border: 1px solid var(--c2);
   border-radius: 20px;
-  background: var(--home-answer-bg);
-  color: var(--home-answer-ink);
+  background: var(--soft);
+  color: var(--ans-ink, var(--c));
   font-size: 10.5px; font-weight: 600; letter-spacing: .2px;
   text-decoration: none; white-space: nowrap;
   transition: background .15s ease, border-color .15s ease, color .15s ease,
@@ -108,14 +108,14 @@ body {
 .mod-answer svg { width: 9px; height: 9px; display: block; }
 @media (hover: hover) and (pointer: fine) {
   .mod-answer:hover {
-    background: var(--home-answer-bg-hover);
-    border-color: var(--home-answer-line-hover);
-    color: var(--home-answer-ink-hover);
+    background: var(--ans-bg-hover, var(--soft));
+    border-color: var(--c);
+    color: var(--ans-ink-hover, var(--c));
   }
   /* 入口与卡片同级，整卡浮动时同步跟一档，视觉上仍是一张卡 */
   .mod-wrap:hover .mod-answer { transform: translateY(-3px); }
 }
-.mod-answer:active { background: var(--home-answer-bg-hover); }
+.mod-answer:active { background: var(--ans-bg-hover, var(--soft)); }
 
 .mod {
   position: relative;

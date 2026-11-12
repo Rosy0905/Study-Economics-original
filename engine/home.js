@@ -32,6 +32,19 @@
     return { c: hex, c2: mixWhite(hex, 0.36), soft: mixWhite(hex, 0.90) };
   }
 
+  /* 主色混黑：答案册入口的文字色与 hover 深色档用 */
+  function mixBlack(hex, t) {
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
+    var n = parseInt(hex.slice(1), 16);
+    var out = '#';
+    for (var shift = 16; shift >= 0; shift -= 8) {
+      var ch = (n >> shift) & 255;
+      var v = Math.round(ch * (1 - t));
+      out += (v < 16 ? '0' : '') + v.toString(16);
+    }
+    return out;
+  }
+
   /* 取模块的配色：配置里指定了 color 就用指定的——
      色名在所有风格套里全局查（轮取套之外的套也能点色）/
      单 hex 自动衍生 / {c,c2,soft} 对象直接用；
@@ -85,8 +98,15 @@
         ' title="进入' + esc(m.answerBook.label || '答案册') + '">' + bookSvg +
         '<span>' + esc(m.answerBook.label || '答案册') + '</span></a>'
       : '';
-    /* 答案册入口与卡片同级，避免链接嵌套；配色变量挂在外层供两边继承 */
-    return '<div class="mod-wrap" style="--c:' + esc(col.c) + ';--c2:' + esc(col.c2) + ';--soft:' + esc(col.soft) + '">' +
+    /* 答案册入口与卡片同级，避免链接嵌套；配色变量挂在外层供两边继承。
+       入口底色与描边沿用模块衍生色，文字与 hover 三档按同一主色混白/混黑派生 */
+    var main = /^#[0-9a-f]{6}$/i.test(col.c || '') ? col.c : '';
+    var ansVars = (m.answerBook && main)
+      ? ';--ans-ink:' + esc(mixBlack(main, 0.20)) +
+        ';--ans-bg-hover:' + esc(mixWhite(main, 0.86)) +
+        ';--ans-ink-hover:' + esc(mixBlack(main, 0.32))
+      : '';
+    return '<div class="mod-wrap" style="--c:' + esc(col.c) + ';--c2:' + esc(col.c2) + ';--soft:' + esc(col.soft) + ansVars + '">' +
       '<a class="mod" href="' + esc(m.url) + '" title="' + esc(m.title) + '">' +
       '<div class="ic">' + esc(m.icon) + '</div>' +
       '<div class="t">' + esc(m.title) + '</div>' +
