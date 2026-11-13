@@ -11,9 +11,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#E0D1EF">
 <title>全站搜索 · 南开经济学 · 知识库</title>
-<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
-<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
-<link rel="stylesheet" href="ui/search.css?v=20261110a">
+<link rel="stylesheet" href="ui/tokens.css?v=20261113a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261113a">
+<link rel="stylesheet" href="ui/search.css?v=20261113a">
 </head>
 <body>
 
@@ -32,10 +32,16 @@
     <div class="empty" id="boot">正在准备索引…</div>
 </div>
 
-<script src="search-index.js?v=20261110a"></script>
-<script src="project.config.js?v=20261110a"></script>
-<script src="engine/store.js?v=20261110a"></script>
-<script src="engine/site-search.js?v=20261110a"></script>
+<script src="project.config.js?v=20261113a"></script>
+<script src="engine/store.js?v=20261113a"></script>
+<script src="engine/search-core.js?v=20261113a"></script>
+<script src="engine/site-search.js?v=20261113a"></script>
 <script>KB.SiteSearch.mount();</script>
+<script>
+/* 离线与复访缓存：注册失败不影响页面本身 */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+</script>
 </body>
 </html>

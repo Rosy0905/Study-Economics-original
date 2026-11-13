@@ -234,7 +234,6 @@
     }
 
     global.addEventListener('pagehide', stop);
-    global.addEventListener('beforeunload', stop);
 
     setState('idle');
     return { stop: stop, isBusy: function () { return state !== 'idle'; }, supported: true };

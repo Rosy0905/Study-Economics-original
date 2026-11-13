@@ -849,9 +849,9 @@
       },
       { passive: true }
     );
-    /* 刷新或关页时同步落一次盘：160ms 防抖可能漏掉最后一小段 */
+    /* 刷新或关页时同步落一次盘：160ms 防抖可能漏掉最后一小段。
+       pagehide 已覆盖这些时机，不再挂离开确认，页面才能进往返缓存 */
     global.addEventListener('pagehide', saveScroll);
-    global.addEventListener('beforeunload', saveScroll);
 
     function restoreScroll() {
       /* 搜索态也恢复：列表滚动后刷新仍落原位（对齐原版） */

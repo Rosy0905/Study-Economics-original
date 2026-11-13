@@ -391,9 +391,9 @@
             clearTimeout(scrollTimer);
             scrollTimer = setTimeout(saveScroll, 160);
         }, { passive: true });
-        /* 防抖可能漏掉最后一段，关页/刷新前同步落一次 */
+        /* 防抖可能漏掉最后一段，关页/刷新前同步落一次。
+           pagehide 已覆盖关页、刷新与切后台，不再挂离开确认，页面才能进往返缓存 */
         window.addEventListener('pagehide', saveScroll);
-        window.addEventListener('beforeunload', saveScroll);
 
         function tip(msg) {
             /* 同时只留一条：连着触发两次不会叠成两坨 */

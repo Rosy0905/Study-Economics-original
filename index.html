@@ -9,13 +9,12 @@
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="preload" href="search-index.js?v=20261110a" as="script">
 <meta name="theme-color" content="#E0D1EF">
 <title>南开经济学 · 知识库</title>
-<link rel="stylesheet" href="ui/tokens.css?v=20261110a">
-<link rel="stylesheet" href="theme/tokens.css?v=20261110a">
-<link rel="stylesheet" href="ui/components.css?v=20261110a">
-<link rel="stylesheet" href="ui/home.css?v=20261110a">
+<link rel="stylesheet" href="ui/tokens.css?v=20261113a">
+<link rel="stylesheet" href="theme/tokens.css?v=20261113a">
+<link rel="stylesheet" href="ui/components.css?v=20261113a">
+<link rel="stylesheet" href="ui/home.css?v=20261113a">
 </head>
 <body class="page-home">
 <div class="home-wrap">
@@ -167,17 +166,23 @@
 <!-- 导入用的文件选择器（确认弹层由 KB.UI.confirm 动态生成） -->
 <input type="file" id="importFile" accept=".json,application/json" style="display:none" />
 
-<script src="palette.config.js?v=20261110a"></script>
-<script src="project.config.js?v=20261110a"></script>
-<script src="engine/render/common.js?v=20261110a"></script>
-<script src="engine/ui.js?v=20261110a"></script>
-<script src="engine/store.js?v=20261110a"></script>
-<script src="engine/blobstore.js?v=20261110a"></script>
-<script src="engine/tts.js?v=20261110a"></script>
-<script src="engine/clear/core.js?v=20261110a"></script>
-<script src="engine/clear/petal.js?v=20261110a"></script>
-<script src="engine/sync/wechat.js?v=20261110a"></script>
-<script src="engine/sync/core.js?v=20261110a"></script>
-<script src="engine/home.js?v=20261110a"></script>
+<script src="palette.config.js?v=20261113a" defer></script>
+<script src="project.config.js?v=20261113a" defer></script>
+<script src="engine/render/common.js?v=20261113a" defer></script>
+<script src="engine/ui.js?v=20261113a" defer></script>
+<script src="engine/store.js?v=20261113a" defer></script>
+<script src="engine/blobstore.js?v=20261113a" defer></script>
+<script src="engine/tts.js?v=20261113a" defer></script>
+<script src="engine/clear/core.js?v=20261113a" defer></script>
+<script src="engine/clear/petal.js?v=20261113a" defer></script>
+<script src="engine/sync/wechat.js?v=20261113a" defer></script>
+<script src="engine/sync/core.js?v=20261113a" defer></script>
+<script src="engine/home.js?v=20261113a" defer></script>
+<script>
+/* 离线与复访缓存：注册失败不影响页面本身 */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+</script>
 </body>
 </html>

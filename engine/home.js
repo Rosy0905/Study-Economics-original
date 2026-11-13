@@ -390,18 +390,24 @@
 
   /* ---------- 引导 ---------- */
 
+  /* 首屏只用静态配置与本地状态：标题、八个入口、彩虹线、进度与朗读都在
+     同一帧画完。内容层镜像在后台灌，灌不灌得满都不影响这一屏。
+     清除与导出要读整库，等镜像就绪后单独接线。 */
   function start() {
     KB.Store.configure({ prefix: cfg.storagePrefix, projectId: cfg.projectId });
     if (KB.UI && KB.UI.initToast) KB.UI.initToast(document.getElementById('toast'));
 
-    /* 内容类数据在库里，等镜像灌满再渲染与接线，
-       否则导出与统计只看得到 localStorage 那一层 */
+    renderChrome();
+    var ttsCtl = initTTS();
+    initProgress(ttsCtl);
+
     var boot = (KB.Store && KB.Store.ready) ? KB.Store.ready() : Promise.resolve();
-    Promise.resolve(boot).then(mountHome, mountHome);
+    Promise.resolve(boot).then(function () { mountDataPanels(ttsCtl); },
+                              function () { mountDataPanels(ttsCtl); });
   }
 
-  function mountHome() {
-    /* 文案全部来自配置 */
+  /* 文案、入口、配色全部来自配置，不碰存储层 */
+  function renderChrome() {
     var title = document.getElementById('homeTitle');
     var sub = document.getElementById('homeSubtitle');
     var foot = document.getElementById('homeFooter');
@@ -430,11 +436,11 @@
 
     renderGrid();
     paintRainbowLine();
-    var ttsCtl = initTTS();
-    initProgress(ttsCtl);
+  }
 
-    /* 花瓣与同步球互斥：展开一边就收起另一边。
-       两个模块互不认识，交叉接线只在这里做一次 */
+  /* 花瓣与同步球互斥：展开一边就收起另一边。
+     两个模块互不认识，交叉接线只在这里做一次 */
+  function mountDataPanels(ttsCtl) {
     var syncCtl = null;
     var clearCtl = initClearData(ttsCtl, function () { return syncCtl; });
     syncCtl = initSync(clearCtl, ttsCtl);
