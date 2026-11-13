@@ -176,8 +176,8 @@
 
     function renderIdle() {
       wrapEl.innerHTML = '<div class="empty">在右上角敲一个词，一次搜遍全站<br>' +
-        '<span>各模块卡片、历年真题题干与答案、你自己存的卡片，都在里面<br>' +
-        '空格分开两个词表示「同时包含」，比如 <a href="#" data-demo="无差异曲线 递减">无差异曲线 递减</a></span></div>';
+        '<span>各模块卡片、历年真题题干与答案、自己存的卡片，都在里面<br>' +
+        '空格分开两个词表示「同时包含」，比如 <a href="#" data-demo="古诺 均衡">古诺 均衡</a></span></div>';
       updateResetUI();
     }
 
