@@ -14,9 +14,6 @@
   /* 题型分节的序号：一、简答　二、计算　三、论述 */
   var CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
-  /* 窄屏断点，与 answers.css 的 @media 同值 */
-  var NARROW_MAX = 780;
-
   /* 熟悉度的档位：与题库页同一套词与同一份存储。
      label 是药丸上的字，word 是句子里对这一档的说法（空状态文案用），
      加档位只改这一处，药丸和句子不会各说各的。 */
@@ -799,30 +796,10 @@
 
     function render() {
       renderSub();
-      alignSwitch();
       if (yearbar) yearbar.render(findPaper(currentKey));
       renderContent();
       syncChips();
       syncTools();
-    }
-
-    /* 窄屏：开关的右缘对齐副题「文字」的右缘，不是页头右缘。
-       副题长度随卷名与题数变，所以每次重绘量一次实际文字宽度再设 margin-right；
-       宽屏清掉这个偏移，开关仍跟在标题后头。 */
-    function alignSwitch() {
-      if (!subEl || !toggle) return;
-      var node = toggle.parentNode;
-      if (!node) return;
-      if (global.innerWidth > NARROW_MAX) {
-        node.style.marginRight = '';
-        return;
-      }
-      var range = document.createRange();
-      range.selectNodeContents(subEl);
-      var text = range.getBoundingClientRect();
-      var box = subEl.getBoundingClientRect();
-      if (!text.width || !box.width) return;
-      node.style.marginRight = Math.max(0, Math.round(box.right - text.right)) + 'px';
     }
 
     /* ---- 滚动位置记忆 ----
@@ -1117,10 +1094,6 @@
 
     buildChips();
     render();
-
-    /* 窗口宽度或字体宽度变了，开关的横向对齐要重算 */
-    global.addEventListener('resize', alignSwitch);
-    global.addEventListener('load', alignSwitch);
 
     /* 首帧之后才滚：字体与图片可能还在加载，太早滚会落偏。
        带题号或学科的深链优先落点；没有深链就回到上次看到的位置。 */
