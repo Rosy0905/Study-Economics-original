@@ -197,7 +197,7 @@
                描边颜色走动画，头尾都透明，进出是淡的；不改 border-radius，卡片形状不动。 */
             + '@keyframes sjFlash{0%{outline-color:rgba(212,162,78,0);}'
             + '8%,72%{outline-color:#d4a24e;}100%{outline-color:rgba(212,162,78,0);}}'
-            + '.card-item.sj-flash{outline:2px solid transparent;outline-offset:-2px;'
+            + '.card-item.sj-flash,.item.sj-flash{outline:2px solid transparent;outline-offset:-2px;'
             + 'box-shadow:0 4px 18px rgba(180,140,60,.28);animation:sjFlash 2.8s ease;}'
             /* 答案册结果列表的行：跟列表行高亮同一套，浅黄底 + 细描边，不套卡片那圈光环 */
             + '.sr-item.sj-flash{background:#fff8e6;outline:2px solid #e8c877;outline-offset:-2px;}'
@@ -443,6 +443,23 @@
 
         function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 
+        /* 答案册单卷渲染后给目标题补一次金边，跟其余模块用同一套 sjFlash。
+           答案册自身的 flash 有会话门闩会挡掉跨页跳转的这一次，这里绕开门闩；
+           先摘掉可能残留的 flash，避免两套样式叠在同一题上。 */
+        function flashPaperItem(id) {
+            var el = null;
+            try { el = document.getElementById(id); } catch (e) {}
+            if (!el) return;
+            el.classList.remove('flash');
+            el.classList.remove('sj-flash');
+            void el.offsetWidth;
+            el.classList.add('sj-flash');
+            setTimeout(function () {
+                var e2 = document.getElementById(id);
+                if (e2) e2.classList.remove('sj-flash');
+            }, 2800);
+        }
+
         /* ---------- 定位卡片 ----------
            n：重试次数（卡片渲染有延迟）
            onFail：重试完仍找不到时的回调，由调用方决定下一步降级 */
@@ -469,7 +486,11 @@
                     setTimeout(function () { try { el.click(); } catch (e) {} }, 130);
                     var wait = 0;
                     (function paperReady() {
-                        if (document.querySelector('.paper-head')) { setTimeout(unveil, 130); return; }
+                        if (document.querySelector('.paper-head')) {
+                            flashPaperItem(cid);
+                            setTimeout(unveil, 130);
+                            return;
+                        }
                         if (++wait > 14) { unveil(); return; }
                         setTimeout(paperReady, 50);
                     })();
