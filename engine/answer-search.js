@@ -62,9 +62,14 @@
     return true;
   }
 
-  /* 一道题的搜索底本：题干 + 换行 + 答案 */
+  /* 出处文本：把每条出处的正文连起来，作为独立的检索片段 */
+  function srcText(item) {
+    return (item.src || []).map(function (r) { return String((r && r.t) || ''); }).join('\n');
+  }
+
+  /* 一道题的搜索底本：题干 + 出处 + 答案 */
   function hay(item) {
-    return String(item.stem || '') + '\n' + String(item.ans || '');
+    return String(item.stem || '') + '\n' + srcText(item) + '\n' + String(item.ans || '');
   }
 
   /* 命中片段：以命中词为中心取「命中句 + 前一句」，保证片段里看得到关键词。
@@ -121,14 +126,18 @@
       .replace(/\n[ \t]*\n[\s]*/g, '\n')
       .replace(/\s+/g, ' ')
       .trim();
+    var src = srcText(item).replace(/\s+/g, ' ').trim();
     var ans = String(item.ans || '').replace(/\s+/g, ' ').trim();
 
-    /* 先看题干再看答案，命中在答案里才标那句提示 */
+    /* 题干、答案、出处依次看，命中在答案或出处里才标那句提示 */
     var r1 = firstIn(stem, M);
     if (r1) return { text: around(stem, r1.i, r1.len), where: 'stem' };
 
     var r2 = firstIn(ans, M);
     if (r2) return { text: around(ans, r2.i, r2.len), where: 'ans' };
+
+    var r3 = firstIn(src, M);
+    if (r3) return { text: around(src, r3.i, r3.len), where: 'src' };
 
     return { text: stem.slice(0, 96), where: 'stem' };
   }

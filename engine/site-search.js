@@ -135,7 +135,8 @@
         'data-mod="' + esc(g.key) + '" data-cid="' + esc(h.i) + '">' +
         (h.no ? '<span class="no">' + esc(h.no) + '</span>' : '') +
         '<span class="txt">' + (h.txt || '') +
-        (h.where === 'a' ? '<span class="tip">　· 命中在答案里</span>' : '') + '</span>' +
+        (h.where === 'a' ? '<span class="tip">　· 命中在答案里</span>' : '') +
+        (h.where === 'src' ? '<span class="tip">　· 命中在出处里</span>' : '') + '</span>' +
         (meta ? '<span class="meta" title="' + esc(meta) + '">' + esc(meta) + '</span>' : '') +
         '</a>';
     }

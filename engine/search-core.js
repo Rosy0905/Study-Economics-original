@@ -77,10 +77,13 @@
   function snippet(c, M) {
     var q = displayText(c.q);
     var a = displayText(c.a);
+    var x = displayText(c.x);
     var r1 = locIn(q, M);
     if (r1) return { text: sentAround(q, r1.i, r1.len), where: 'q' };
     var r2 = locIn(a, M);
     if (r2) return { text: sentAround(a, r2.i, r2.len), where: 'a' };
+    var r3 = locIn(x, M);
+    if (r3) return { text: sentAround(x, r3.i, r3.len), where: 'src' };
     return { text: (q || a).slice(0, 96), where: 'q' };
   }
   function hl(text, M) {
@@ -100,7 +103,7 @@
     (mods || []).forEach(function (m) {
       var hits = [];
       (m.cards || []).forEach(function (c) {
-        if (!kwHit(String(c.q || '') + '\n' + String(c.a || ''), M)) return;
+        if (!kwHit(String(c.q || '') + '\n' + String(c.a || '') + '\n' + String(c.x || ''), M)) return;
         var sn = snippet(c, M);
         hits.push({
           i: String(c.i == null ? '' : c.i),

@@ -496,6 +496,7 @@
             '<span class="sr-no">' + esc(h.type) + ' ' + esc(h.it.qid) + '</span>' +
             '<span class="sr-txt">' + KB.AnswerSearch.hl(sn.text, res.M) +
             (sn.where === 'ans' ? '<span class="sr-tip">　· 命中在答案里</span>' : '') +
+            (sn.where === 'src' ? '<span class="sr-tip">　· 命中在出处里</span>' : '') +
             '</span></a>';
         });
 
