@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="ui/tokens.css?v=20261113a">
 <link rel="stylesheet" href="theme/tokens.css?v=20261113a">
 <link rel="stylesheet" href="ui/components.css?v=20261113a">
-<link rel="stylesheet" href="ui/home.css?v=20261113a">
+<link rel="stylesheet" href="ui/home.css?v=20261116a">
 </head>
 <body class="page-home">
 <div class="home-wrap">
@@ -92,6 +92,8 @@
       <span class="prog-cnt">0 字</span>
       <div class="prog-tools">
         <button class="prog-tool prog-tts" type="button">🔊 朗读</button>
+        <button class="prog-tool prog-replay" type="button">重播</button>
+        <button class="prog-tool prog-loop" type="button">单次</button>
         <button class="prog-tool prog-clear" type="button">清空</button>
         <button class="prog-tool prog-save" type="button">保存</button>
       </div>
@@ -172,12 +174,12 @@
 <script src="engine/ui.js?v=20261113a" defer></script>
 <script src="engine/store.js?v=20261113a" defer></script>
 <script src="engine/blobstore.js?v=20261113a" defer></script>
-<script src="engine/tts.js?v=20261113a" defer></script>
+<script src="engine/tts.js?v=20261116a" defer></script>
 <script src="engine/clear/core.js?v=20261113a" defer></script>
 <script src="engine/clear/petal.js?v=20261113a" defer></script>
 <script src="engine/sync/wechat.js?v=20261113a" defer></script>
 <script src="engine/sync/core.js?v=20261113a" defer></script>
-<script src="engine/home.js?v=20261113a" defer></script>
+<script src="engine/home.js?v=20261116a" defer></script>
 <script>
 /* 离线与复访缓存：注册失败不影响页面本身 */
 if ('serviceWorker' in navigator) {

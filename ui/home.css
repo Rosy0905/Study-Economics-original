@@ -721,7 +721,8 @@ body {
   transition: transform .3s cubic-bezier(.34,1.56,.64,1);
 }
 .prog-overlay.show .prog-card { transform: translateY(0) scale(1); }
-.prog-card-head { display: flex; align-items: center; gap: 10px; padding: 0 2px 12px; }
+/* 卡片高度不够时只压输入区，头和按钮保持原高，按钮不会被挤出边框 */
+.prog-card-head { display: flex; align-items: center; gap: 10px; padding: 0 2px 12px; flex: 0 0 auto; }
 .prog-card-head .ttl { font-size: 15px; font-weight: 700; color: var(--home-prog-title); letter-spacing: .3px; }
 .prog-card-head .dt { font-size: 11.5px; color: var(--home-prog-date); }
 .prog-card-close {
@@ -731,17 +732,17 @@ body {
 }
 .prog-card-close:hover { background: var(--home-prog-btn-hover); }
 .prog-card textarea {
-  width: 100%; flex: 1; min-height: 260px; resize: none;
+  width: 100%; flex: 1 1 260px; min-height: 0; resize: none;
   font-family: inherit; font-size: 14px; line-height: 1.9; color: var(--home-note-input-ink);
   background: var(--home-note-input-bg); border: 1px solid var(--home-note-input-line); border-radius: 12px;
   padding: 12px 15px; outline: none; transition: .2s;
 }
 .prog-card textarea::placeholder { color: var(--home-note-placeholder); }
 .prog-card textarea:focus { border-color: var(--home-note-focus); box-shadow: 0 0 0 3px var(--home-note-focus-ring); }
-.prog-card-foot { display: flex; align-items: center; gap: 10px; padding: 10px 2px 0; flex-wrap: wrap; }
+.prog-card-foot { display: flex; align-items: center; gap: 10px; padding: 10px 2px 0; flex-wrap: wrap; flex: 0 0 auto; }
 .prog-cnt { font-size: 11.5px; color: var(--home-prog-date); white-space: nowrap; }
 .prog-cnt.saved { color: var(--home-prog-cnt-saved); }
-.prog-tools { margin-left: auto; display: flex; gap: 8px; }
+.prog-tools { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .prog-tool {
   display: flex; align-items: center; gap: 5px; white-space: nowrap;
   padding: 5px 13px; border-radius: 20px; cursor: pointer;
@@ -750,6 +751,7 @@ body {
 }
 .prog-tool:hover { background: var(--home-prog-btn-hover); }
 .prog-tool:active { transform: translateY(1px); }
+.prog-tool:disabled { opacity: .5; cursor: default; }
 /* 朗读中 / 暂停：暖黄高亮；清空二次确认：红；已保存：绿 */
 .prog-tool.speaking, .prog-tool.paused {
   background: var(--home-prog-tts-bg); border-color: var(--home-prog-tts-line); color: var(--home-prog-tts-ink);
@@ -818,7 +820,10 @@ body {
   .mine-bar-txt i { font-size: 12px; }
 
   .prog-card { width: 100%; max-height: 88vh; padding: 14px 13px 12px; border-radius: 18px; }
-  .prog-card textarea { min-height: 190px; font-size: 13.5px; }
+  .prog-card textarea { flex-basis: 190px; font-size: 13.5px; }
+  /* 字数一行、操作一行，按钮多了也不挤成孤字 */
+  .prog-card-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .prog-tools { margin-left: 0; width: 100%; justify-content: flex-start; }
   .prog-tool { padding: 5px 11px; font-size: 11.5px; }
 }
 

@@ -80,7 +80,14 @@
       btn.title = '当前浏览器不支持语音朗读';
       range.disabled = true;
       range.style.opacity = '.45';
-      return { stop: function () {}, supported: false };
+      return {
+        stop: function () {},
+        isBusy: function () { return false; },
+        setLoop: function () {},
+        getLoop: function () { return false; },
+        replay: function () { return false; },
+        supported: false
+      };
     }
 
     var state = 'idle';        // idle | speaking | paused
@@ -92,6 +99,11 @@
     var chunks = [];
     var cursor = 0;
     var pausedChunk = 0;
+    var loop = false;   // 读完最后一句是否从头再来
+    var tickAt = 0;     // 最近一次播放进度事件的时间
+    var ticked = false; // 是否收到过播放进度事件
+
+    try { loop = !!(opts.getLoop && opts.getLoop()); } catch (e) {}
 
     var saved = parseFloat(getRate());
     if (!isNaN(saved) && saved >= 0.5 && saved <= 2) currentRate = Math.round(saved * 10) / 10;
@@ -132,6 +144,26 @@
       if (state !== 'idle') setState('idle');
     }
 
+    /* 循环开关：true 读完最后一句自动回到开头，false 读完即停 */
+    function setLoop(on) {
+      loop = !!on;
+      if (opts.onLoopChange) { try { opts.onLoopChange(loop); } catch (e) {} }
+      return loop;
+    }
+
+    /* 重播：按当前内容重新分段，从第一句开始，正在读也从头来 */
+    function replay() {
+      var text = (getText() || '').trim();
+      if (!text) { toast(emptyTip); return false; }
+      var list = splitChunks(text);
+      if (!list.length) { toast(emptyTip); return false; }
+      chunks = list;
+      cursor = 0;
+      pausedChunk = 0;
+      speakFrom(0);
+      return true;
+    }
+
     function makeUtterance(text) {
       var u = new SpeechSynthesisUtterance(text);
       var v = pickVoice();
@@ -139,6 +171,8 @@
       u.rate = currentRate;
       u.pitch = 1;
       u.volume = 1;
+      /* 进度事件只在真出声时触发，用来判断恢复是否生效 */
+      u.onboundary = function () { ticked = true; tickAt = Date.now(); };
       return u;
     }
 
@@ -167,6 +201,7 @@
             return;
           }
           if (cursor + 1 < chunks.length) { cursor++; speakFrom(cursor, false); }
+          else if (loop) { cursor = 0; speakFrom(0, false); }
           else { cursor = 0; setState('idle'); }
         };
         u.onerror = function () {
@@ -195,17 +230,24 @@
         pausedChunk = cursor;
         setState('paused');
       } else {
-        /* 继续：先试自带 resume()；稍后检查真没生效（手机端常见）就从当前句重读 */
-        var ok = false;
-        try { synth.resume(); ok = true; } catch (err) {}
+        /* 继续播放：原生恢复可能静默失败。
+           暂停标记未解除，或长时间没有播放进度，就从当前句重读。 */
+        try { synth.resume(); } catch (err) {}
         setState('speaking');
-        if (!ok) { speakFrom(pausedChunk); return; }
+        var mark = Date.now();
+        clearTimeout(resumeTimer);
         resumeTimer = setTimeout(function () {
           if (state !== 'speaking') return;
-          var alive = false;
-          try { alive = synth.speaking === true || synth.pending === true || synth.paused === true; } catch (err) {}
-          if (!alive) speakFrom(pausedChunk);
-        }, 500);
+          var moving = false;
+          try { moving = synth.paused !== true && (synth.speaking === true || synth.pending === true); } catch (err) {}
+          if (!moving) { speakFrom(pausedChunk); return; }
+          /* 状态已恢复却没声音的实现：留足一个长句的时间，仍无进度才重读 */
+          if (!ticked || tickAt >= mark) return;
+          resumeTimer = setTimeout(function () {
+            if (state !== 'speaking') return;
+            if (tickAt < mark) speakFrom(pausedChunk);
+          }, 1400);
+        }, 800);
       }
     });
 
@@ -236,7 +278,14 @@
     global.addEventListener('pagehide', stop);
 
     setState('idle');
-    return { stop: stop, isBusy: function () { return state !== 'idle'; }, supported: true };
+    return {
+      stop: stop,
+      isBusy: function () { return state !== 'idle'; },
+      setLoop: setLoop,
+      getLoop: function () { return loop; },
+      replay: replay,
+      supported: true
+    };
   }
 
   KB.TTS = { mount: mount, splitChunks: splitChunks };

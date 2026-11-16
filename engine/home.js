@@ -149,6 +149,8 @@
     var saveBtn = card.querySelector('.prog-save');
     var clearBtn = card.querySelector('.prog-clear');
     var ttsBtn = card.querySelector('.prog-tts');
+    var replayBtn = card.querySelector('.prog-replay');
+    var loopBtn = card.querySelector('.prog-loop');
     var closeBtn = card.querySelector('.prog-card-close');
     if (!full) return;
 
@@ -281,8 +283,36 @@
         mainTts.click();
         setTimeout(syncTtsLabel, 100);
       });
+
+      /* 重播：先把弹层最新内容落盘，再从第一句读起 */
+      if (replayBtn) {
+        replayBtn.addEventListener('click', function () {
+          KB.Store.set('home', 'progress', full.value);
+          input.value = full.value.replace(/[\r\n]+/g, ' ');
+          lastSpoken = full.value;
+          mainTtsCtl.replay();
+          setTimeout(syncTtsLabel, 100);
+        });
+      }
+
+      /* 循环开关：只切播放器模式，不动内容与播放位置 */
+      if (loopBtn) {
+        var loopOn = !!(mainTtsCtl.getLoop && mainTtsCtl.getLoop());
+        var syncLoop = function () {
+          loopBtn.textContent = loopOn ? '循环' : '单次';
+          loopBtn.setAttribute('aria-pressed', loopOn ? 'true' : 'false');
+        };
+        loopBtn.addEventListener('click', function () {
+          loopOn = !loopOn;
+          if (mainTtsCtl.setLoop) mainTtsCtl.setLoop(loopOn);
+          syncLoop();
+        });
+        syncLoop();
+      }
     } else if (ttsBtn) {
       ttsBtn.disabled = true;
+      if (replayBtn) replayBtn.disabled = true;
+      if (loopBtn) loopBtn.disabled = true;
     }
 
     if (closeBtn) closeBtn.addEventListener('click', closeCard);
