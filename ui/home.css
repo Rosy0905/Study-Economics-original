@@ -821,10 +821,9 @@ body {
 
   .prog-card { width: 100%; max-height: 88vh; padding: 14px 13px 12px; border-radius: 18px; }
   .prog-card textarea { flex-basis: 190px; font-size: 13.5px; }
-  /* 字数一行、操作一行，按钮多了也不挤成孤字 */
-  .prog-card-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .prog-tools { margin-left: 0; width: 100%; justify-content: flex-start; }
-  .prog-tool { padding: 5px 11px; font-size: 11.5px; }
+  /* 字数与按钮同排靠右，收一点间距和边距容下五个按钮 */
+  .prog-tools { gap: 6px; }
+  .prog-tool { padding: 5px 10px; font-size: 11.5px; }
 }
 
 /* 极窄机型：花瓣圈与进度条再收一档 */

@@ -241,8 +241,10 @@
           var moving = false;
           try { moving = synth.paused !== true && (synth.speaking === true || synth.pending === true); } catch (err) {}
           if (!moving) { speakFrom(pausedChunk); return; }
+          /* 从不上报进度事件的环境无法确认恢复是否生效，一律重读当前句 */
+          if (!ticked) { speakFrom(pausedChunk); return; }
           /* 状态已恢复却没声音的实现：留足一个长句的时间，仍无进度才重读 */
-          if (!ticked || tickAt >= mark) return;
+          if (tickAt >= mark) return;
           resumeTimer = setTimeout(function () {
             if (state !== 'speaking') return;
             if (tickAt < mark) speakFrom(pausedChunk);
