@@ -9,33 +9,37 @@
 
   var KB = global.KB = global.KB || {};
 
-  /* 把整段文字切成"一句一段"；几句拼一段再交给引擎（一段一句的话每个句号
-     都要收尾一次，听着卡顿），超长段再按逗号细切。
-     分段的根本原因：手机浏览器对 pause()/resume() 支持不可靠（典型是暂停后
-     再点播放没反应），分段后 resume 失效也能从当前这句重读，听感是接着往下；
+  /* 把整段文字细切成小段：所有句读标点（句号问号叹号分号冒号逗号，
+     含半角）都是段边界，碎片并入相邻段。
+     切得细的原因：手机浏览器不报告朗读位置、pause()/resume() 又不可靠，
+     续读只能以段为单位——段越细，暂停后续读重复的跨度越小；
      顺带避开安卓"长句读到 15 秒左右自动断掉"的老问题。 */
   function splitChunks(text) {
     var clean = String(text).replace(/\r?\n+/g, '。').replace(/\s+/g, ' ').trim();
     if (!clean) return [];
-    var sentences = clean.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [clean];
 
-    var CHUNK = 110;   // 每段目标长度
-    var HARD  = 170;   // 单段硬上限，超了才在逗号处切
+    var clauses = clean.match(/[^。！？!?；;：:，,]+[。！？!?；;：:，,]?/g) || [clean];
+
+    var HARD = 110;   // 无标点长句的硬上限，超了在顿号或空格处切
     var out = [];
     var buf = '';
-    sentences.forEach(function (raw) {
+    clauses.forEach(function (raw) {
       var s = raw.trim();
       if (!s) return;
-      if (buf && buf.length + s.length > CHUNK) { out.push(buf); buf = s; }
-      else { buf += s; }
+      if (buf && buf.length < 5) { buf += s; }        // 过碎的片段并进相邻段
+      else if (buf) { out.push(buf); buf = s; }
+      else { buf = s; }
     });
-    if (buf) out.push(buf);
+    if (buf) {
+      if (buf.length < 5 && out.length) out[out.length - 1] += buf;
+      else out.push(buf);
+    }
 
     var final = [];
     out.forEach(function (piece) {
       while (piece.length > HARD) {
         var cut = -1;
-        var marks = ['，', ',', '、', '；', ';', ' '];
+        var marks = ['、', ' ', '·'];
         for (var k = 0; k < marks.length; k++) {
           var i = piece.lastIndexOf(marks[k], HARD);
           if (i > HARD * 0.4) { cut = i + 1; break; }
@@ -206,6 +210,8 @@
         };
         u.onerror = function () {
           if (my !== token) return;
+          /* 暂停态的报错是暂停打断语音的常见误报，忽略，继续时从当前句重读 */
+          if (state === 'paused') return;
           cursor = 0;
           setState('idle');
         };
@@ -224,14 +230,21 @@
         if (!chunks.length) { toast(emptyTip); return; }
         speakFrom(0);
       } else if (state === 'speaking') {
-        /* 暂停：优先用浏览器自带 pause()，能停在句子中间 */
-        try { synth.pause(); } catch (err) {}
+        /* 暂停：能观测播放进度的环境用自带 pause()，停在句子中间；
+           从不观测的环境恢复不可信，直接取消，继续时从当前句重读 */
         clearTimeout(resumeTimer);
         pausedChunk = cursor;
+        if (ticked) {
+          try { synth.pause(); } catch (err) {}
+        } else {
+          token++;
+          try { synth.cancel(); } catch (err) {}
+        }
         setState('paused');
       } else {
-        /* 继续播放：原生恢复可能静默失败。
-           暂停标记未解除，或长时间没有播放进度，就从当前句重读。 */
+        /* 继续播放：能观测进度的环境试原生恢复并复核是否真出声；
+           从不观测的环境不试恢复，直接从当前句重读 */
+        if (!ticked) { speakFrom(pausedChunk); return; }
         try { synth.resume(); } catch (err) {}
         setState('speaking');
         var mark = Date.now();
@@ -241,8 +254,6 @@
           var moving = false;
           try { moving = synth.paused !== true && (synth.speaking === true || synth.pending === true); } catch (err) {}
           if (!moving) { speakFrom(pausedChunk); return; }
-          /* 从不上报进度事件的环境无法确认恢复是否生效，一律重读当前句 */
-          if (!ticked) { speakFrom(pausedChunk); return; }
           /* 状态已恢复却没声音的实现：留足一个长句的时间，仍无进度才重读 */
           if (tickAt >= mark) return;
           resumeTimer = setTimeout(function () {
