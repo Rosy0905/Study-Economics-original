@@ -233,40 +233,41 @@
         }
 
         function restoreFilters() {
-            /* 退出搜索：按快照还原搜索词，下拉保持会话中改过的值。
-               框架页的 select 用 data-key 不带 id，这里跳过下拉还原，原件由 FM.restore 写回。 */
-            if (!fmSnap) {
-                var inp0 = getInp();
-                if (inp0) {
-                    inp0.value = '';
-                    try { inp0.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
-                }
-                return;
+            /* 退出搜索：按快照还原搜索词与各下拉。
+               框架子页的下拉是 select[data-key] 没有 id，必须一并写回并触发 change，
+               否则屏幕上的下拉停在会话中改过的值，只有存储还原了，看起来就像没还原。
+               快照两种格式都认：框架 { values: {...}, keyword }，原版扁平键。 */
+            var o = null;
+            if (fmSnap) { try { o = JSON.parse(fmSnap) || null; } catch (e) { o = null; } }
+            function storedVal(s) {
+                if (!o) return '';
+                var key = s.getAttribute('data-key') ||
+                          (s.id ? s.id.replace(/^filter/, '') : '');
+                if (o.values && typeof o.values[key] === 'string') return o.values[key];
+                if (s.id && typeof o[s.id] === 'string') return o[s.id];
+                if (typeof o[key] === 'string') return o[key];
+                return '';
             }
-            var o = {};
-            if (fmSnap) { try { o = JSON.parse(fmSnap) || {}; } catch (e) { o = {}; } }
             var bar = document.getElementById('filterBar');
-            var trigger = null;
             if (bar) {
                 var sels = bar.querySelectorAll('select');
                 for (var i = 0; i < sels.length; i++) {
                     var s = sels[i];
-                    if (!s.id) continue;                       /* 只认有 id 的，跟筛选记忆的键一一对应 */
-                    var v = o[s.id];
-                    if (typeof v === 'string' && v && optionExists(s, v)) s.value = v;
-                    else if (s.options.length) s.value = s.options[0].value;  /* 快照里没有 = 本来没设过 = 回默认 */
-                    if (!trigger) trigger = s;
+                    var v = storedVal(s);
+                    var t = (v && optionExists(s, v)) ? v
+                          : (s.options.length ? s.options[0].value : '');
+                    if (s.value !== t) {
+                        s.value = t;
+                        try { s.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                    }
                 }
             }
-            /* 原版快照是扁平键，框架快照是 { values, keyword }；两种都认 */
-            var kw = (typeof o.filterSearch === 'string') ? o.filterSearch
-                   : (typeof o.keyword === 'string') ? o.keyword : '';
+            /* 原版快照的搜索词存在扁平键里，框架的存在 keyword */
+            var kwv = o ? ((typeof o.keyword === 'string') ? o.keyword
+                       : (typeof o.filterSearch === 'string') ? o.filterSearch : '') : '';
             var inp = getInp();
-            if (inp) inp.value = kw;
-            /* 让页面按恢复后的条件重画一次。用它的 change 监听，不自己碰 render */
-            if (trigger) {
-                try { trigger.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
-            } else if (inp) {
+            if (inp) {
+                inp.value = kwv;
                 try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
             }
         }
@@ -315,6 +316,13 @@
             var a = document.createElement('a');
             a.href = BACK_URL;
             a.textContent = '← 回到搜索结果';
+            /* 点回搜索列表前把进会话前的筛选记忆原件写回存储：
+               会话里手动改过的下拉在页面上继续有效，但下不为例——
+               不写回的话，绕道返回再点一次进来，筛选就真的被改掉了 */
+            a.addEventListener('click', function () {
+                fmPause();
+                if (FM && FM.restore) { try { FM.restore(fmSnap); } catch (e) {} }
+            });
             bar.appendChild(a);
             if (ansMode) {
                 /* 真题的命中列表单独给一个入口，跟「回搜索页」分开：
@@ -540,20 +548,42 @@
             /* 答案册还有一条后路：直接改 hash，它自己的 locateFromHash 会接住 */
             if (ansMode && cid) { try { window.location.hash = cid; } catch (e) {} }
             unveil();
-            /* 「仅收藏」是最常把人挡在外面的一种，单独说清楚，否则一句「清一下筛选」
-               让人不知道该清哪个。其余情况仍用那句拢得住的话。都压在十几字，手机一行放得下。 */
-            var favSel = document.getElementById('filterFav');
-            var onlyFav = !!(favSel && favSel.value === 'fav');
-            tip(onlyFav ? '当前只看收藏，这一张没收藏' : '卡片被筛选挡住了，清一下筛选再看看');
+            /* 走到这步之前搜索词已清空、各下拉已放回默认，还不出现就是真不在了 */
+            tip('没找到这张卡片，内容可能已经删了或改了');
+        }
+
+        /* 最后一搏：把各下拉临时放回默认再定位。
+           卡片常被「只看收藏」这类档位挡住，放下来就能看见；
+           放下的档位属于搜索会话，叉掉浮动条时随快照一起还原 */
+        function liftAndLocate() {
+            var bar = document.getElementById('filterBar');
+            var lifted = false;
+            if (bar) {
+                var sels = bar.querySelectorAll('select');
+                for (var i = 0; i < sels.length; i++) {
+                    var s = sels[i];
+                    var d = s.options.length ? s.options[0].value : '';
+                    if (s.value !== d) {
+                        s.value = d;
+                        lifted = true;
+                        try { s.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                    }
+                }
+            }
+            if (!lifted) { lostTip(); return; }
+            /* 程序放下的档位不写筛选记忆，等页面自己的防抖过去再恢复记录 */
+            fmPause();
+            fmResumeSoon(700);
+            gotoCard(0, lostTip);
         }
 
         function clearAndLocate() {
             var inp = getInp();
             if (inp && inp.value) {
-                fill('', function () { gotoCard(0, lostTip); });
+                fill('', function () { gotoCard(0, liftAndLocate); });
                 return;
             }
-            gotoCard(0, lostTip);
+            gotoCard(0, liftAndLocate);
         }
 
         function attempt(i) {

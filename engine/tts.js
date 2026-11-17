@@ -110,7 +110,7 @@
     try { loop = !!(opts.getLoop && opts.getLoop()); } catch (e) {}
 
     var saved = parseFloat(getRate());
-    if (!isNaN(saved) && saved >= 0.5 && saved <= 2) currentRate = Math.round(saved * 10) / 10;
+    if (!isNaN(saved) && saved >= 0.1 && saved <= 2) currentRate = Math.round(saved * 10) / 10;
 
     range.value = currentRate;
     if (val) val.textContent = currentRate.toFixed(1) + '×';
