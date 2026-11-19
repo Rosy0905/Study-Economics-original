@@ -595,12 +595,16 @@
             e.preventDefault();
             pressUntil = Date.now() + 800;   /* 这段窗口里的选区抖动一律不算 */
             rememberRange(editor);
+            var tb = e.target.closest('.rte-tbl');
+            if (tb) tb.__delTable = tableAtCaret();
         });
         /* 手机上没有 mousedown 这一下：在 touchstart 阶段就先把选区存好 */
         bar.addEventListener('touchstart', function (e) {
             if (e.target.closest && !e.target.closest('button')) return;
             pressUntil = Date.now() + 800;
             rememberRange(editor);
+            var tb = e.target.closest('.rte-tbl');
+            if (tb) tb.__delTable = tableAtCaret();
         }, { passive: true });
 
         /* 把选区涉及的 h1~h6 降为 p，保留子节点与选区位置 */
@@ -693,6 +697,53 @@
         return true;
     }
 
+    /* 光标在表格内时表格按钮变删除态，图标不变、只换文案并高亮 */
+    function tableAtCaret() {
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return null;
+        var n = sel.anchorNode;
+        if (!n || !editor.contains(n)) return null;
+        var el = n.nodeType === 1 ? n : n.parentNode;
+        while (el && el !== editor) {
+            if (/^TABLE$/i.test(el.nodeName || '')) return el;
+            el = el.parentNode;
+        }
+        return null;
+    }
+    function syncTableBtn() {
+        if (Date.now() < pressUntil) return;
+        var btn = bar.querySelector('.rte-tbl');
+        if (!btn) return;
+        var tbl = tableAtCaret();
+        btn.__delTable = tbl || null;
+        var long = btn.querySelector('.rte-lbl-l');
+        var short = btn.querySelector('.rte-lbl-s');
+        if (tbl) {
+            long.textContent = '删除表格';
+            short.textContent = '删表';
+            btn.title = '删除表格';
+            btn.classList.add('is-del');
+        } else {
+            long.textContent = '插入表格';
+            short.textContent = '表格';
+            btn.title = '插入表格';
+            btn.classList.remove('is-del');
+        }
+    }
+    function deleteTableAtCaret(btn) {
+        var tbl = btn.__delTable;
+        if (!tbl || !editor.contains(tbl)) return;
+        if (!KB.UI || !KB.UI.confirm) return;
+        KB.UI.confirm({
+            title: '删除表格',
+            message: '确定删除这个表格吗？',
+            okText: '删除',
+            danger: true
+        }).then(function (yes) {
+            if (yes && editor.contains(tbl)) removeTableAndPlaceCaret(editor, tbl);
+        });
+    }
+
     /* BIU + 工具按钮。抽成函数，因为点击有可能被手机浏览器吞掉（见下面兜底） */
     function runBtn(b) {
             if (Date.now() < (b.__runAt || 0) + 300) return;   /* 防重复执行 */
@@ -746,7 +797,8 @@
                 syncFmt(bar);
                 showTip('已清除格式');
             } else if (act === 'table') {
-                openTableModal(editor);
+                if (b.__delTable) deleteTableAtCaret(b);
+                else openTableModal(editor);
             } else if (act === 'inline') {
                 var t1 = '$公式$';
                 insertTextAtCursor(editor, t1);
@@ -808,141 +860,144 @@
         /* 选区变化时：记下来 + 同步 B/I/U 的按下状态。
            手机上手指拖选文字只有 selectionchange 最靠得住（touchend 不一定落在笔记框上） */
         document.addEventListener('selectionchange', function () {
+            syncTableBtn();
             var sel = window.getSelection();
             if (!sel || !sel.anchorNode || !editor.contains(sel.anchorNode)) return;
             rememberRange(editor);
             syncFmt(bar);
         });
 
-        /* 表格删除：contenteditable 默认不会删表格，光标在表后按 Backspace 或
-           选中整个表格按 Backspace/Delete 都删不掉，这里手动处理。 */
-        function rangeContainsNode(range, node) {
-            try {
-                var sel = window.getSelection();
-                if (sel && sel.containsNode) return sel.containsNode(node, false);
-            } catch (x) {}
-            var nr = document.createRange();
-            nr.selectNode(node);
-            return range.compareBoundaryPoints(Range.START_TO_START, nr) <= 0 &&
-                   range.compareBoundaryPoints(Range.END_TO_END, nr) >= 0;
+        /* 表格删除与剪切共用：识别选中的整张表。判定按文字位置比较，
+           拖选边界被浏览器吸附到表格内外任何一侧都能认出来。
+           拖选产生单元格高亮选区的形态未接管，此路不通时删表用工具栏的删除表格按钮 */
+        function selectedTable(editor) {
+            var sel = window.getSelection();
+            if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+            var range = sel.getRangeAt(0);
+            /* 两端都在编辑器根上的选区（如 Ctrl+A）交给浏览器原生删除 */
+            if (range.startContainer === editor && range.endContainer === editor) return null;
+            var tables = editor.querySelectorAll('table');
+            for (var i = 0; i < tables.length; i++) {
+                var t = tables[i];
+                var hit = false;
+                try { hit = range.intersectsNode(t); } catch (x) {}
+                if (hit && selectionCoversTable(range, t)) return t;
+            }
+            return null;
         }
-        function isEmptyBlock(block) {
-            if (!block) return false;
-            var html = block.innerHTML.trim();
-            return html === '' || html === '<br>' || html === '<br/>' || html === '<br />';
+        function selectionCoversTable(range, t) {
+            var nr = document.createRange();
+            nr.selectNode(t);
+            if (range.compareBoundaryPoints(Range.START_TO_START, nr) <= 0 &&
+                range.compareBoundaryPoints(Range.END_TO_END, nr) >= 0) return true;
+            /* 拖选过表时选区起点落在第一行内、终点落在最后一行内，
+               按首末行边界判断，中间隔着空单元格也能认出 */
+            var rows = t.querySelectorAll('tr');
+            if (!rows.length) return false;
+            var fc = document.createRange();
+            fc.selectNodeContents(rows[0]);
+            fc.collapse(false);
+            var lc = document.createRange();
+            lc.selectNodeContents(rows[rows.length - 1]);
+            lc.collapse(true);
+            return range.compareBoundaryPoints(Range.START_TO_START, fc) <= 0 &&
+                   range.compareBoundaryPoints(Range.END_TO_END, lc) >= 0;
+        }
+        /* 删表后的光标落位：表格前是什么就落哪里，裸文字落字后、
+           空行落空行、段落落末尾；前面没有内容才落到后面那块的开头 */
+        function caretRangeAfterTable(editor, table) {
+            var n = table.previousSibling;
+            while (n && n.nodeType === 3 && !(n.nodeValue || '').trim()) n = n.previousSibling;
+            if (n && n.nodeType === 3) {
+                var rt = document.createRange();
+                rt.setStart(n, n.nodeValue.length);
+                rt.collapse(true);
+                return rt;
+            }
+            if (n && n.nodeType === 1 && n.tagName !== 'TABLE') {
+                var re = document.createRange();
+                re.selectNodeContents(n);
+                re.collapse(false);
+                return re;
+            }
+            var m = table.nextSibling;
+            while (m && m.nodeType === 3 && !(m.nodeValue || '').trim()) m = m.nextSibling;
+            if (m && m.nodeType === 1 && m.tagName !== 'TABLE') {
+                var rf = document.createRange();
+                rf.setStart(m, 0);
+                rf.collapse(true);
+                return rf;
+            }
+            var p = editor.querySelector('p');
+            if (!p) {
+                p = document.createElement('p');
+                p.innerHTML = '<br>';
+                editor.appendChild(p);
+            }
+            var rg = document.createRange();
+            rg.setStart(p, 0);
+            rg.collapse(true);
+            return rg;
+        }
+        function applyCaretRange(editor, sel, rr) {
+            if (!editor.contains(rr.startContainer)) {
+                var p = editor.querySelector('p');
+                if (!p) {
+                    p = document.createElement('p');
+                    p.innerHTML = '<br>';
+                    editor.appendChild(p);
+                }
+                rr = document.createRange();
+                rr.setStart(p, 0);
+                rr.collapse(true);
+            }
+            sel.removeAllRanges();
+            sel.addRange(rr);
         }
         function removeTableAndPlaceCaret(editor, table) {
+            ensureEditable(editor);
             var sel = window.getSelection();
-            /* 删表前先记住表格的位置邻居 —— 删完后光标必须落回表格原先所在的位置。
-               不能随手抓编辑器里第一个段落：表格前面还有文字时，
-               光标会被塞到全文开头。 */
-            var next = table.nextElementSibling;
-            var prev = table.previousElementSibling;
-            /* 优先用 execCommand('delete')，这样浏览器会把删表动作写进 undo 栈，
-               按 Ctrl+Z 能撤销。选区直接覆盖整张表再删；浏览器没删干净再手动兜底。 */
+            var rr = caretRangeAfterTable(editor, table);
+            /* 优先用 execCommand('delete')，删表动作会写进 undo 栈，Ctrl+Z 可撤销；
+               浏览器没删干净再手动移除 */
             var r = document.createRange();
             r.selectNode(table);
             sel.removeAllRanges();
             sel.addRange(r);
             var ok = false;
             try { ok = document.execCommand('delete', false, null); } catch (x) {}
-            if (ok && !editor.contains(table)) {
-                /* 光标落位：优先表后邻居（插入表格时自动跟的空段落通常就在这），
-                   其次表前邻居的末尾（光标接在前文后面），都没有才退回第一个段落 */
-                var rr = document.createRange();
-                if (next && next.tagName === 'P' && editor.contains(next)) {
-                    rr.setStart(next, 0);
-                    rr.collapse(true);
-                } else if (prev && prev.tagName === 'P' && editor.contains(prev)) {
-                    rr.selectNodeContents(prev);
-                    rr.collapse(false);
-                } else {
-                    var p = editor.querySelector('p');
-                    if (!p) {
-                        p = document.createElement('p');
-                        p.innerHTML = '<br>';
-                        editor.appendChild(p);
-                    }
-                    rr.setStart(p, 0);
-                    rr.collapse(true);
-                }
-                sel.removeAllRanges();
-                sel.addRange(rr);
-                rememberRange(editor);
-                return;
+            if (!(ok && !editor.contains(table))) {
+                table.remove();
+                /* 手动移除时浏览器不会派发 input，补一发让保存逻辑认账 */
+                notifyInput(editor);
             }
-            /* 兜底：浏览器没删或没写进 undo，走手动移除 */
-            var p2 = table.nextElementSibling;
-            if (!p2 || p2.tagName !== 'P' || p2.textContent.trim() !== '') {
-                p2 = document.createElement('p');
-                p2.innerHTML = '<br>';
-                table.parentNode.insertBefore(p2, table);
-            }
-            table.remove();
-            /* 这条是手动移除，浏览器不会派发 input，补一发免得删表不算改动 */
-            notifyInput(editor);
-            var rr2 = document.createRange();
-            rr2.setStart(p2, 0);
-            rr2.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(rr2);
+            applyCaretRange(editor, sel, rr);
             rememberRange(editor);
         }
         function handleTableDelete(editor, e) {
             if (e.key !== 'Backspace' && e.key !== 'Delete') return false;
             var sel = window.getSelection();
             if (!sel || !sel.rangeCount || !editor.contains(sel.anchorNode)) return false;
-            var range = sel.getRangeAt(0);
-            var table = null;
-
-            if (!range.collapsed) {
-                /* 选中范围包含整个表格，或跨越多个单元格，删表 */
-                var ca = range.commonAncestorContainer;
-                if (ca.nodeType === 3) ca = ca.parentNode;
-                while (ca && ca !== editor) {
-                    if (/^TABLE|TBODY|THEAD|TFOOT|TR$/i.test(ca.tagName)) {
-                        table = ca.tagName === 'TABLE' ? ca : (ca.closest && ca.closest('table'));
-                        break;
-                    }
-                    ca = ca.parentNode;
-                }
-                if (!table) {
-                    editor.querySelectorAll('table').forEach(function (t) {
-                        if (!table && rangeContainsNode(range, t)) table = t;
-                    });
-                }
-                if (table) {
-                    e.preventDefault();
-                    removeTableAndPlaceCaret(editor, table);
-                    return true;
-                }
-            } else {
-                /* 折叠光标在表格边界 */
-                var sc = range.startContainer, so = range.startOffset;
-                var block = sc.nodeType === 3 ? sc.parentNode : sc;
-                while (block && block !== editor && !/^P|DIV|H[1-6]|LI$/i.test(block.tagName)) {
-                    block = block.parentNode;
-                }
-
-                if (e.key === 'Backspace') {
-                    var prev = null;
-                    if (sc === editor && so > 0) prev = sc.childNodes[so - 1];
-                    else if (block && block !== editor && isEmptyBlock(block)) prev = block.previousSibling;
-                    if (prev && prev.tagName === 'TABLE') table = prev;
-                } else {
-                    var next = null;
-                    if (sc === editor) next = sc.childNodes[so];
-                    else if (block && block !== editor) next = block.nextSibling;
-                    if (next && next.tagName === 'TABLE') table = next;
-                }
-                if (table) {
-                    e.preventDefault();
-                    removeTableAndPlaceCaret(editor, table);
-                    return true;
-                }
-            }
-            return false;
+            if (sel.getRangeAt(0).collapsed) return false;
+            var table = selectedTable(editor);
+            if (!table) return false;
+            e.preventDefault();
+            removeTableAndPlaceCaret(editor, table);
+            return true;
         }
+
+        /* 剪切整表：contenteditable 原生剪切只带走文字，这里把表格写进剪贴板再删 */
+        editor.addEventListener('cut', function (e) {
+            if (editor.getAttribute('contenteditable') !== 'true') return;
+            var table = selectedTable(editor);
+            if (!table) return;
+            e.preventDefault();
+            if (e.clipboardData) {
+                e.clipboardData.setData('text/html', table.outerHTML);
+                try { e.clipboardData.setData('text/plain', table.textContent || ''); } catch (x) {}
+            }
+            removeTableAndPlaceCaret(editor, table);
+        });
 
         /* 公式（.katex-host）的键盘处理：公式保持可编辑（原生删除/撤销照常），
            只在两个时机接管：

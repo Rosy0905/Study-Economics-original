@@ -711,6 +711,12 @@
     @media (hover: hover) and (pointer: fine) { .editor-tools .btn-insert-img:hover { background: var(--mc-editor-12); } }
     .editor-tools .btn-insert-table { background: var(--mc-editor-13); color: var(--mc-editor-14); }
     @media (hover: hover) and (pointer: fine) { .editor-tools .btn-insert-table:hover { background: var(--mc-editor-15); } }
+    /* 光标在表格内时表格按钮切删除态（杏橙） */
+    .editor-tools .btn-insert-table.is-del { background: #f3e0c2; color: #7d4d17; }
+    @media (hover: hover) and (pointer: fine) { .editor-tools .btn-insert-table.is-del:hover { background: #ecd3ab; } }
+    /* 同一颗按钮放长短两段文案：桌面用完整写法，窄屏／触摸设备用短写法 */
+    .editor-tools .lbl-l { display: inline; }
+    .editor-tools .lbl-s { display: none; }
     .editor-tools .btn-insert-formula { background: var(--mc-editor-16); color: var(--mc-editor-17); }
     @media (hover: hover) and (pointer: fine) { .editor-tools .btn-insert-formula:hover { background: var(--mc-editor-18); } }
     .editor-tools .btn-clear-answer { background: var(--mc-editor-19); color: var(--mc-editor-20); }
@@ -913,6 +919,8 @@
         .export-tools .export-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
         .export-tools .export-count { margin-left: 0; }
         .editor-tools .tip { display: none; }
+        .editor-tools .lbl-l { display: none; }
+        .editor-tools .lbl-s { display: inline; }
         .classify-row .chapter-field { flex-basis: 100%; min-width: 0; }
         .classify-row .index-input { width: 88px; }
         .chapter-pop-list { max-height: 200px; }

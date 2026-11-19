@@ -1294,6 +1294,7 @@
     }
 
     document.addEventListener('selectionchange', rememberEditorRange);
+    document.addEventListener('selectionchange', syncTableBtn);
 
     /* 在 document 捕获阶段记录工具栏按下，早于 touchstart 默认动作清选区；click 时由快照恢复 */
     ['touchstart', 'mousedown'].forEach(function (ev) {
@@ -1402,6 +1403,7 @@
         e.preventDefault();
         toolbarPressUntil = Date.now() + 800;   /* 这段窗口里的选区抖动一律不算 */
         rememberEditorRange();
+        if (b === insertTableBtn) insertTableBtn.__delTable = tableAtCaret();
     });
 
     /* 手机没有 mousedown，touchstart 阶段先存选区，点下去再恢复，避免按钮点击时选区丢失 */
@@ -1410,6 +1412,7 @@
         if (!b) return;
         toolbarPressUntil = Date.now() + 800;
         rememberEditorRange();
+        if (b === insertTableBtn) insertTableBtn.__delTable = tableAtCaret();
     }, { passive: true });
 
     /* ---- BIU ---- */
@@ -1459,6 +1462,7 @@
         return '';
     }
     answerEditor.addEventListener('keydown', function (e) {
+        if (handleTableBoxDelete(answerEditor, e)) return;
         if (handleBackspaceIntoHeading(answerEditor, e)) return;
         if (handleEmptyHeadingEnter(answerEditor, e)) return;
         var cmd = editorShortcutCmd(e);
@@ -1560,6 +1564,175 @@
         return true;
     }
 
+    /* 光标所在表格 */
+    function tableAtCaret() {
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return null;
+        var n = sel.anchorNode;
+        if (!n || !answerEditor.contains(n)) return null;
+        var el = n.nodeType === 1 ? n : n.parentNode;
+        while (el && el !== answerEditor) {
+            if (/^TABLE$/i.test(el.nodeName || '')) return el;
+            el = el.parentNode;
+        }
+        return null;
+    }
+
+    /* 光标在表格内时表格按钮变删除态，图标不变、只换文案并高亮 */
+    function syncTableBtn() {
+        if (Date.now() < toolbarPressUntil) return;
+        if (!insertTableBtn) return;
+        var tbl = tableAtCaret();
+        insertTableBtn.__delTable = tbl || null;
+        var long = insertTableBtn.querySelector('.lbl-l');
+        var short = insertTableBtn.querySelector('.lbl-s');
+        if (tbl) {
+            if (long) long.textContent = '删除表格';
+            if (short) short.textContent = '删表';
+            insertTableBtn.title = '删除表格';
+            insertTableBtn.classList.add('is-del');
+        } else {
+            if (long) long.textContent = '插入表格';
+            if (short) short.textContent = '表格';
+            insertTableBtn.title = '插入表格';
+            insertTableBtn.classList.remove('is-del');
+        }
+    }
+
+    function confirmDeleteTable(table) {
+        if (!table || !answerEditor.contains(table)) return;
+        openConfirm({
+            title: '删除表格',
+            msg: '确定删除这个表格吗？',
+            okText: '删除',
+            danger: true,
+            onOk: function () {
+                if (answerEditor.contains(table)) removeTableAndPlaceCaret(table);
+            }
+        });
+    }
+
+    /* 选中的整张表。判定按文字位置比较，拖选边界被浏览器吸附到
+       表格内外任何一侧都能认出来 */
+    function tableInSelection(ed) {
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount || sel.isCollapsed) return null;
+        var range = sel.getRangeAt(0);
+        /* 两端都在编辑器根上的选区（如 Ctrl+A）交给浏览器原生删除 */
+        if (range.startContainer === ed && range.endContainer === ed) return null;
+        var tables = ed.querySelectorAll('table');
+        for (var i = 0; i < tables.length; i++) {
+            var t = tables[i];
+            var hit = false;
+            try { hit = range.intersectsNode(t); } catch (x) {}
+            if (hit && selectionCoversTable(range, t)) return t;
+        }
+        return null;
+    }
+    function selectionCoversTable(range, t) {
+        var nr = document.createRange();
+        nr.selectNode(t);
+        if (range.compareBoundaryPoints(Range.START_TO_START, nr) <= 0 &&
+            range.compareBoundaryPoints(Range.END_TO_END, nr) >= 0) return true;
+        /* 拖选过表时选区起点落在第一行内、终点落在最后一行内，
+           按首末行边界判断，中间隔着空单元格也能认出 */
+        var rows = t.querySelectorAll('tr');
+        if (!rows.length) return false;
+        var fc = document.createRange();
+        fc.selectNodeContents(rows[0]);
+        fc.collapse(false);
+        var lc = document.createRange();
+        lc.selectNodeContents(rows[rows.length - 1]);
+        lc.collapse(true);
+        return range.compareBoundaryPoints(Range.START_TO_START, fc) <= 0 &&
+               range.compareBoundaryPoints(Range.END_TO_END, lc) >= 0;
+    }
+
+    /* 删表后的光标落位：表格前是什么就落哪里，裸文字落字后、
+       空行落空行、段落落末尾；前面没有内容才落到后面那块的开头 */
+    function caretRangeAfterTable(table) {
+        var n = table.previousSibling;
+        while (n && n.nodeType === 3 && !(n.nodeValue || '').trim()) n = n.previousSibling;
+        if (n && n.nodeType === 3) {
+            var rt = document.createRange();
+            rt.setStart(n, n.nodeValue.length);
+            rt.collapse(true);
+            return rt;
+        }
+        if (n && n.nodeType === 1 && n.tagName !== 'TABLE') {
+            var re = document.createRange();
+            re.selectNodeContents(n);
+            re.collapse(false);
+            return re;
+        }
+        var m = table.nextSibling;
+        while (m && m.nodeType === 3 && !(m.nodeValue || '').trim()) m = m.nextSibling;
+        if (m && m.nodeType === 1 && m.tagName !== 'TABLE') {
+            var rf = document.createRange();
+            rf.setStart(m, 0);
+            rf.collapse(true);
+            return rf;
+        }
+        return null;
+    }
+    function applyCaretRange(rr) {
+        if (!rr || !answerEditor.contains(rr.startContainer)) {
+            var p = answerEditor.querySelector('p');
+            if (!p) {
+                p = document.createElement('p');
+                p.innerHTML = '<br>';
+                answerEditor.appendChild(p);
+            }
+            rr = document.createRange();
+            rr.setStart(p, 0);
+            rr.collapse(true);
+        }
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(rr);
+    }
+    function removeTableAndPlaceCaret(table) {
+        try { answerEditor.focus(); } catch (x) {}
+        var sel = window.getSelection();
+        var rr = caretRangeAfterTable(table);
+        var r = document.createRange();
+        r.selectNode(table);
+        sel.removeAllRanges();
+        sel.addRange(r);
+        var ok = false;
+        try { ok = document.execCommand('delete', false, null); } catch (x) {}
+        if (!(ok && !answerEditor.contains(table))) {
+            table.remove();
+            /* 手动移除时浏览器不会派发 input，补一发让保存逻辑认账 */
+            try { answerEditor.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {}
+        }
+        applyCaretRange(rr);
+        rememberEditorRange();
+    }
+
+    /* 框选整张表时删除表格。拖选产生单元格高亮选区的形态未接管，
+       此路不通时删表用工具栏的删除表格按钮 */
+    function handleTableBoxDelete(ed, e) {
+        if (e.key !== 'Backspace' && e.key !== 'Delete') return false;
+        var table = tableInSelection(ed);
+        if (!table) return false;
+        e.preventDefault();
+        removeTableAndPlaceCaret(table);
+        return true;
+    }
+
+    /* 剪切整表：contenteditable 原生剪切只带走文字，这里把表格写进剪贴板再删 */
+    answerEditor.addEventListener('cut', function (e) {
+        var table = tableInSelection(answerEditor);
+        if (!table) return;
+        e.preventDefault();
+        if (e.clipboardData) {
+            e.clipboardData.setData('text/html', table.outerHTML);
+            try { e.clipboardData.setData('text/plain', table.textContent || ''); } catch (x) {}
+        }
+        removeTableAndPlaceCaret(table);
+    });
+
     /* ---- 清除格式 ----
         选中文字时去掉该段的加粗 / 斜体 / 下划线；
         只有光标时关掉待生效的打字样式；
@@ -1649,7 +1822,10 @@
         showToast('▦ 表格已插入，点击单元格可直接编辑');
     }
 
-    insertTableBtn.addEventListener('click', openTableDialog);
+    insertTableBtn.addEventListener('click', function () {
+        if (insertTableBtn.__delTable) confirmDeleteTable(insertTableBtn.__delTable);
+        else openTableDialog();
+    });
     tableOkBtn.addEventListener('click', confirmInsertTable);
     tableCancelBtn.addEventListener('click', closeTableDialog);
     tableOverlay.addEventListener('click', function (e) {

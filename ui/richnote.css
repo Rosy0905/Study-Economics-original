@@ -28,6 +28,9 @@ button,input,select,textarea,label,a,.rte-bar,.rte-imgctl,.imgctl,.rte-viewer-ba
 @media (hover:hover) and (pointer:fine){.rte-bar .rte-img:hover{background:var(--rte-imgb-hover);}}
 .rte-bar .rte-tbl{background:var(--rte-tblb);color:var(--rte-tblb-ink);}
 @media (hover:hover) and (pointer:fine){.rte-bar .rte-tbl:hover{background:var(--rte-tblb-hover);}}
+    /* 光标在表格内时表格按钮切删除态（杏橙） */
+.rte-bar .rte-tbl.is-del{background:#f3e0c2;color:#7d4d17;}
+@media (hover:hover) and (pointer:fine){.rte-bar .rte-tbl.is-del:hover{background:#ecd3ab;}}
 .rte-bar .rte-fml{background:var(--rte-fmlb);color:var(--rte-fmlb-ink);}
 @media (hover:hover) and (pointer:fine){.rte-bar .rte-fml:hover{background:var(--rte-fmlb-hover);}}
     /* 字重取 500，与卡片头部徽标一个分量 */
