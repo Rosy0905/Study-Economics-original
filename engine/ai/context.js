@@ -69,9 +69,14 @@
         var masked = aEl && aEl.closest(C.maskSelector);
         if (aEl && !masked) {
           ans = aEl.textContent.trim();
+          /* 笔记区展开时才喂笔记，收起的笔记不进上下文。
+             普通模式收起答案会连带收起笔记，自测模式点查看/自评只揭答案不展笔记，
+             这两种收起态都不该被读到；手动点开笔记按钮后才读。 */
           var nEl = card.querySelector(C.noteSelector);
-          note = nEl ? nEl.textContent.trim() : '';
-          if (note && note.indexOf(C.notePlaceholder) > -1) note = '';
+          if (nEl && nEl.closest(C.openSelector)) {
+            note = nEl.textContent.trim();
+            if (note.indexOf(C.notePlaceholder) > -1) note = '';
+          }
         }
       }
       return { key: cardKey(card), label: label, q: q, a: ans, n: note };

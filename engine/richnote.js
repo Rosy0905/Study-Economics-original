@@ -687,14 +687,29 @@
             runBtn(b);
         });
         /* 兜底：手机上 click 偶尔会被浏览器吞掉（手指微动、键盘顶起页面、
-           选区小手柄正好盖住按钮都会），表现就是「按钮点不动」。
-           touchend 之后 320ms 还没等到 click 就自己跑一遍；click 真来了就不跑。 */
+           选区小手柄正好盖住按钮都会），表现就是按钮点不动。
+           touchend 之后 320ms 还没等到 click 就自己跑一遍；click 真来了就不跑。
+           touchend 的 target 始终是 touchstart 那个按钮，手指从按钮上滑过滚动页面时
+           也会被当成点按钮，所以记下起点，位移超过阈值就判定为滑动、不补发。 */
+        var touchStart = null;
+        bar.addEventListener('touchstart', function (e) {
+            var t0 = e.changedTouches && e.changedTouches[0];
+            touchStart = t0 ? { x: t0.clientX, y: t0.clientY } : null;
+        }, { passive: true });
+        bar.addEventListener('touchcancel', function () { touchStart = null; }, { passive: true });
         bar.addEventListener('touchend', function (e) {
             var b = e.target.closest && e.target.closest('button');
+            var start = touchStart;
+            touchStart = null;
             if (!b) return;
-            var t = Date.now();
+            var t1 = e.changedTouches && e.changedTouches[0];
+            if (start && t1) {
+                var dx = t1.clientX - start.x, dy = t1.clientY - start.y;
+                if (dx * dx + dy * dy > 100) return;   /* 超过 10px 视为滑动 */
+            }
+            var now = Date.now();
             setTimeout(function () {
-                if ((b.__clickAt || 0) >= t) return;   /* click 正常到了 */
+                if ((b.__clickAt || 0) >= now) return;   /* click 正常到了 */
                 runBtn(b);
             }, 320);
         }, { passive: true });
