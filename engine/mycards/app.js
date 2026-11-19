@@ -1459,6 +1459,8 @@
         return '';
     }
     answerEditor.addEventListener('keydown', function (e) {
+        if (handleBackspaceIntoHeading(answerEditor, e)) return;
+        if (handleEmptyHeadingEnter(answerEditor, e)) return;
         var cmd = editorShortcutCmd(e);
         if (!cmd) return;
         e.preventDefault();
@@ -1468,9 +1470,100 @@
         syncFormatButtons();
     });
 
+    /* 把选区涉及的 h1~h6 降为 p，保留子节点与选区位置 */
+    function demoteHeadings(ed) {
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        var range = sel.getRangeAt(0);
+        var heads = ed.querySelectorAll('h1,h2,h3,h4,h5,h6');
+        if (!heads.length) return;
+        var targets = [];
+        Array.prototype.forEach.call(heads, function (h) {
+            var hit = false;
+            try { hit = range.intersectsNode ? range.intersectsNode(h) : false; } catch (x) {}
+            if (hit) targets.push(h);
+        });
+        if (!targets.length) return;
+        var sc = range.startContainer, so = range.startOffset;
+        var ec = range.endContainer, eo = range.endOffset;
+        var moved = false;
+        targets.forEach(function (h) {
+            var p = document.createElement('p');
+            while (h.firstChild) p.appendChild(h.firstChild);
+            if (sc === h) { sc = p; moved = true; }
+            if (ec === h) { ec = p; moved = true; }
+            if (h.parentNode) h.parentNode.replaceChild(p, h);
+        });
+        /* 选区端点落在标题元素上时改指新段落 */
+        if (moved) {
+            try {
+                var r2 = document.createRange();
+                r2.setStart(sc, so);
+                r2.setEnd(ec, eo);
+                sel.removeAllRanges();
+                sel.addRange(r2);
+            } catch (x) {}
+        }
+    }
+
+    /* 正文行首退格并入前置空标题时，只删空标题、保留正文样式 */
+    function handleBackspaceIntoHeading(ed, e) {
+        if (e.isComposing || e.keyCode === 229) return false;
+        if (e.key !== 'Backspace' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return false;
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount || !sel.isCollapsed) return false;
+        var r = sel.getRangeAt(0);
+        if (r.startOffset !== 0) return false;   /* 光标须在块首 */
+        var n = r.startContainer;
+        if (n.nodeType === 3) n = n.parentNode;
+        var block = n;
+        while (block && block.parentNode !== ed && block !== ed) block = block.parentNode;
+        if (!block || block === ed) return false;
+        if (/^H[1-6]$/.test(block.nodeName || '')) return false;   /* 光标已在标题里，走默认 */
+        var prev = block.previousElementSibling;
+        if (!prev || !/^H[1-6]$/.test(prev.nodeName || '')) return false;
+        if ((prev.textContent || '').trim() || prev.querySelector('img')) return false;
+        e.preventDefault();
+        if (prev.parentNode) prev.parentNode.removeChild(prev);
+        return true;
+    }
+
+    /* 空标题内回车后转为正文段落 */
+    function handleEmptyHeadingEnter(ed, e) {
+        if (e.isComposing || e.keyCode === 229) return false;
+        if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return false;
+        var sel = window.getSelection();
+        if (!sel || !sel.rangeCount || !sel.isCollapsed) return false;
+        var n = sel.anchorNode;
+        if (!n) return false;
+        var el = n.nodeType === 1 ? n : n.parentNode;
+        var head = null;
+        while (el && el !== ed) {
+            if (/^H[1-6]$/.test(el.nodeName || '')) { head = el; break; }
+            el = el.parentNode;
+        }
+        if (!head) return false;
+        if ((head.textContent || '').trim()) return false;
+        if (head.querySelector('img')) return false;
+        e.preventDefault();
+        var p = document.createElement('p');
+        while (head.firstChild) p.appendChild(head.firstChild);
+        if (!p.firstChild) p.appendChild(document.createElement('br'));
+        if (head.parentNode) head.parentNode.replaceChild(p, head);
+        try {
+            var r = document.createRange();
+            r.setStart(p, 0);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+        } catch (x) {}
+        return true;
+    }
+
     /* ---- 清除格式 ----
         选中文字时去掉该段的加粗 / 斜体 / 下划线；
-        只有光标时关掉待生效的打字样式，避免接着写仍被前面的粗体带着走。 */
+        只有光标时关掉待生效的打字样式；
+        选区碰到的 h1~h6 降为 p。 */
     clearFmtBtn.addEventListener('click', function () {
         try { getEditorRange(); } catch (x) {}
         answerEditor.focus();
@@ -1493,6 +1586,7 @@
                 try { if (document.queryCommandState(c)) document.execCommand(c, false, null); } catch (x) {}
             });
         }
+        demoteHeadings(answerEditor);
         lastEdInteraction = Date.now();
         toolbarPressUntil = 0;
         rememberEditorRange();
