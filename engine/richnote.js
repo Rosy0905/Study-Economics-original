@@ -1119,14 +1119,22 @@
         /* ---------- 粘贴 markdown → 富文本 ----------
            从别处复制来的原始 markdown（**加粗** / ### 标题 / - 列表 / |表格|）
            直接粘只会剩字面星号，这里自带一份轻量转换。
-           $...$ / $$...$$ 全程优先保护（否则 * 会被当成斜体，把公式结构拆坏）。 */
+           $...$ / $$...$$ 全程优先保护（否则 * 会被当成斜体，把公式结构拆坏）。
+           跨行 $$ 块整体占位后再转换，公式内容保持在同一文本节点。 */
     function mdToHtml(md) {
-        return C.mdToHtml(md, { paraJoin: '<br>', skipEmptyQuote: true });
+        var src = C.normalizeMathBlocks ? C.normalizeMathBlocks(md) : md;
+        var maths = [];
+        src = String(src == null ? '' : src).replace(/\$\$([\s\S]+?)\$\$/g, function (m) {
+            maths.push(m);
+            return '\u0000B' + (maths.length - 1) + '\u0000';
+        });
+        var html = C.mdToHtml(src, { paraJoin: '<br>', skipEmptyQuote: true });
+        return html.replace(/\u0000B(\d+)\u0000/g, function (_, i) { return maths[+i]; });
     }
         /* 只接管「纯文本 + 确实像 markdown」的粘贴；
            剪贴板自带真富文本 HTML 的交给浏览器原样粘，不碰。 */
     function looksLikeMd(s) {
-        return C.looksLikeMarkdown(s, { mode: 'note' });
+        return C.looksLikeMarkdown(s, { mode: 'note' }) || /\$\$/.test(s || '');
     }
 
         editor.addEventListener('paste', function (e) {
