@@ -300,6 +300,14 @@ body {
   transition: box-shadow 0.25s, transform 0.15s, border-color 0.3s;
   overflow: hidden;
   position: relative;
+  scroll-margin-top: 20px;
+  outline: 2px solid transparent;
+}
+
+/* 从答案册题号跳来：目标卡亮一圈金边，与答案册深链同一套提示 */
+.card-item.flash {
+  outline-color: var(--fav-border);
+  box-shadow: var(--ab-shadow-flash);
 }
 
 /* 抽查模式：只留一张卡，栅格收窄、投影加重、左侧色条加粗 */

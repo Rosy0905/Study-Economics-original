@@ -63,20 +63,16 @@
       var q = (qEl ? qEl.textContent : '').trim();
       var label = cardLabel(card);
       var ans = '', note = '';
-      /* 答案未遮罩时才喂给模型；自测遮罩态不喂，避免剧透 */
+      /* 答案未遮罩时读取答案 */
       if (withAnswer) {
         var aEl = card.querySelector(C.answerSelector);
         var masked = aEl && aEl.closest(C.maskSelector);
-        if (aEl && !masked) {
-          ans = aEl.textContent.trim();
-          /* 笔记区展开时才喂笔记，收起的笔记不进上下文。
-             普通模式收起答案会连带收起笔记，自测模式点查看/自评只揭答案不展笔记，
-             这两种收起态都不该被读到；手动点开笔记按钮后才读。 */
-          var nEl = card.querySelector(C.noteSelector);
-          if (nEl && nEl.closest(C.openSelector)) {
-            note = nEl.textContent.trim();
-            if (note.indexOf(C.notePlaceholder) > -1) note = '';
-          }
+        if (aEl && !masked) ans = aEl.textContent.trim();
+        /* 笔记按自身展开态读取 */
+        var nEl = card.querySelector(C.noteSelector);
+        if (nEl && nEl.closest(C.openSelector)) {
+          note = nEl.textContent.trim();
+          if (note.indexOf(C.notePlaceholder) > -1) note = '';
         }
       }
       return { key: cardKey(card), label: label, q: q, a: ans, n: note };
@@ -189,7 +185,7 @@
         var aLimit = Math.max(C.answerMin, Math.min(C.answerMax, C.budgetTotal - qUsed - nUsed));
         if (qTxt) ctx += '题目：' + clipForAI(qTxt, C.questionLimit, '题目', clipped) + '\n';
         if (aTxt) ctx += '答案：' + clipForAI(aTxt, aLimit, '答案', clipped) + '\n';
-        if (nTxt) ctx += '用户笔记：' + clipForAI(nTxt, C.noteLimit, '笔记', clipped) + '\n';
+        if (nTxt) ctx += (C.noteLabel || '用户笔记') + '：' + clipForAI(nTxt, C.noteLimit, '笔记', clipped) + '\n';
 
         var refs = [];
         for (var k = 0; k < visible.length && refs.length < C.otherCards; k++) {

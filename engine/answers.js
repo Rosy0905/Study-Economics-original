@@ -426,9 +426,13 @@
     /* 档位只用来筛，不在条目上留任何标记：原版就是这样——
        条目的题号、题干、出处、参考答案区在开不开熟悉度时长得一模一样 */
     function renderItem(item) {
+      /* 题号链接到真题页对应题目 */
+      var backHref = (A.back && A.back.href) ? A.back.href : '8past-exams.html';
+      var toBank = backHref + '#' + encodeURIComponent(item.id);
       return (
         '<article class="item" id="' + esc(item.id) + '">' +
-        '<div class="q-head"><span class="no">' + esc(item.qid) + '</span>' +
+        '<div class="q-head"><a class="no" href="' + esc(toBank) + '" target="_blank" rel="noopener">' +
+        esc(item.qid) + '</a>' +
         '<div class="stem">' + KB.Html.stem(item.stem, renderer) + '</div></div>' +
         renderSrc(item) +
         (item.ans

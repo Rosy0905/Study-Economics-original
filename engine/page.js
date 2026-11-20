@@ -379,6 +379,42 @@
       return !!el && el.classList.contains('open');
     }
 
+    /* 从答案册题号跳来：#题目id 定位到那张卡，滚动并亮金边 */
+    function locateFromHash() {
+      var raw = (global.location.hash || '').replace(/^#/, '');
+      if (!raw) return;
+      var id;
+      try { id = decodeURIComponent(raw); } catch (e) { id = raw; }
+      if (!cardOf(id)) return;
+      var el = grid.querySelector('.card-item[data-id="' + id + '"]');
+      if (!el) {
+        values = KB.Filters.emptyValues(M);
+        keyword = '';
+        render();
+        el = grid.querySelector('.card-item[data-id="' + id + '"]');
+        if (!el) return;
+      }
+      /* 滚动到位，首帧后再校正一次 */
+      try { el.scrollIntoView({ block: 'start', behavior: 'auto' }); } catch (e) {}
+      global.setTimeout(function () {
+        var e2 = grid.querySelector('.card-item[data-id="' + id + '"]');
+        if (e2) { try { e2.scrollIntoView({ block: 'start', behavior: 'auto' }); } catch (e) {} }
+      }, 120);
+
+      /* 同一题一次会话只亮一次金边 */
+      var key = 'kb:flash:' + M.id;
+      var seen = false;
+      try { seen = global.sessionStorage.getItem(key) === id; } catch (e) {}
+      if (!seen) {
+        el.classList.add('flash');
+        global.setTimeout(function () {
+          var e3 = grid.querySelector('.card-item[data-id="' + id + '"]');
+          if (e3) e3.classList.remove('flash');
+        }, 2600);
+        try { global.sessionStorage.setItem(key, id); } catch (e) {}
+      }
+    }
+
     function onToggle(id) {
       /* 自测模式下答案固定展开并遮住，点题目不切换；揭晓只走「查看答案」。
          没有答案区的模块（熟悉度）不遮不拦，点题目照常展开作答区。 */
@@ -630,6 +666,8 @@
     mountAnswerEntry();
 
     render();
+    locateFromHash();
+    global.addEventListener('hashchange', locateFromHash);
 
     instance = {
       render: render,

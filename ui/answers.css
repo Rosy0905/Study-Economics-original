@@ -474,8 +474,10 @@ body.st-on .tb-row2 { display: flex; }
 
 .q-head .no {
   flex-shrink: 0;
+  box-sizing: border-box;
   width: 23px;
   height: 23px;
+  border: 2px solid transparent;
   border-radius: 7px;
   background: var(--ab-no-bg);
   color: var(--ab-no-fg);
@@ -485,7 +487,15 @@ body.st-on .tb-row2 { display: flex; }
   align-items: center;
   justify-content: center;
   margin-top: 3px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
 }
+.q-head .no:hover {
+  background: #d3e7d5;
+  border-color: var(--ab-no-fg);
+}
+.q-head .no:focus-visible { outline: 2px solid var(--ab-no-fg); outline-offset: 2px; }
 
 .q-head .stem {
   font-size: var(--ab-stem-size);
