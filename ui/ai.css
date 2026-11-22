@@ -484,6 +484,7 @@ body.ai-lock-scroll{position:fixed;top:var(--ai-lock-y, 0px);left:0;right:0;widt
 .mycards-confirm-row label{font-size:12px;color:var(--ai-c137);}
 .mycards-select{appearance:none;-webkit-appearance:none;border:1px solid var(--ai-c138);border-radius:20px;background:var(--ai-c139) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%236a8f76%27 stroke-width=%272%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E") no-repeat right 10px center;padding:7px 26px 7px 12px;font-size:13px;color:var(--ai-c038);font-family:inherit;cursor:pointer;outline:none;}
 .mycards-select:focus{border-color:var(--ai-c140);background-color:var(--ai-c037);}
+.mycards-select.mycards-qid{background-image:none;padding-right:12px;width:66px;cursor:text;}
 .mycards-confirm-sub{font-size:12px;color:var(--ai-c137);margin-top:10px;margin-bottom:4px;}
 .mycards-confirm-q{font-size:13.5px;color:var(--ai-c038);font-weight:700;line-height:1.6;background:var(--ai-c037);border-radius:9px;padding:8px 10px;outline:none;min-height:26px;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-height:22vh;overflow-y:auto;}
 .mycards-confirm-q:focus{box-shadow:0 0 0 2px var(--ai-c141);}
@@ -492,6 +493,9 @@ body.ai-lock-scroll{position:fixed;top:var(--ai-lock-y, 0px);left:0;right:0;widt
 .mycards-confirm-a th,.mycards-confirm-a td{border:1px solid var(--ai-c138);padding:3px 6px;font-size:12px;}
 .mycards-confirm-a p{margin:0 0 .4em;}
 .mycards-confirm-a img{max-width:100%;}
+.mycards-confirm-a-edit{outline:none;min-height:120px;caret-color:var(--ai-c062);}
+.mycards-confirm-a-edit:focus{box-shadow:0 0 0 2px var(--ai-c141);}
+.mycards-confirm-a-edit:empty::before{content:'（空内容，可直接输入）';color:var(--ai-c137);}
 .mycards-confirm-btns{display:flex;gap:10px;margin-top:16px;}
 .mycards-btn{flex:1;border:none;border-radius:30px;padding:10px 0;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s, background .15s;}
 .mycards-btn-cancel{background:var(--ai-c142);color:var(--ai-c143);}

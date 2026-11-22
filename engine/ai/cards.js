@@ -121,7 +121,7 @@
       } catch (e) {}
     }
 
-    function saveCard(question, answerHtml, subject, chapter, originalQuestion) {
+    function saveCard(question, answerHtml, subject, chapter, originalQuestion, qid) {
       var cards = readCards();
       var q = util.oneLine(question) || util.oneLine(mdPlain(answerHtml)).slice(0, 60) || '（AI 回答）';
       var all = subjects();
@@ -136,7 +136,7 @@
         id: newId,
         subject: subj,
         chapter: String(chapter || '').trim(),
-        qid: '',
+        qid: String(qid || '').trim(),
         hasImage: /<img/i.test(answerHtml),
         question: q,
         originalQuestion: util.oneLine(originalQuestion || question) || q,
@@ -237,11 +237,13 @@
                 }).join('') + '</select>' +
               '<label>章节</label>' +
               '<select class="mycards-select mycards-chapter"></select>' +
+              '<label>序号</label>' +
+              '<input type="text" class="mycards-select mycards-qid" placeholder="选填" maxlength="20">' +
             '</div>' +
             '<div class="mycards-confirm-sub">题目（可直接编辑）</div>' +
             '<div class="mycards-confirm-q" contenteditable="plaintext-only" spellcheck="false"></div>' +
-            '<div class="mycards-confirm-sub">答案预览</div>' +
-            '<div class="mycards-confirm-a"></div>' +
+            '<div class="mycards-confirm-sub">答案（可直接编辑）</div>' +
+            '<div class="mycards-confirm-a mycards-confirm-a-edit" contenteditable="true" spellcheck="false"></div>' +
             '<div class="mycards-confirm-btns">' +
               '<button type="button" class="mycards-btn mycards-btn-cancel">取消</button>' +
               '<button type="button" class="mycards-btn mycards-btn-ok">存入</button>' +
@@ -252,6 +254,7 @@
         var chapSel = confirmOv.querySelector('.mycards-chapter');
         var qBox = confirmOv.querySelector('.mycards-confirm-q');
         var aBox = confirmOv.querySelector('.mycards-confirm-a');
+        var qidInput = confirmOv.querySelector('.mycards-qid');
         subjSel.value = subject;
         chapSel.innerHTML = buildChapterOptions(subject, lastChapter);
         subjSel.addEventListener('change', function () {
@@ -259,17 +262,72 @@
           chapSel.innerHTML = buildChapterOptions(subjSel.value, prev);
         });
         qBox.textContent = qText;
-        aBox.innerHTML = preview || '<span>（空内容）</span>';
+        aBox.innerHTML = preview;
         qBox.addEventListener('paste', function (e) {
           e.preventDefault();
           var text = '';
           try { text = (e.clipboardData || global.clipboardData).getData('text/plain'); } catch (err) {}
           document.execCommand('insertText', false, text);
         });
+        /* 与「我的卡片」编辑器同一套粘贴口径：
+           真富文本先过内核清洗，剥掉来源页的配色字号；纯文本看着像 Markdown 才转，
+           普通文字交浏览器原生粘贴。公式始终留 $...$ 源码，存卡后交 KaTeX 排版。 */
+        function insertHtmlAtCursor(html) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = html;
+          var frag = document.createDocumentFragment();
+          while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+          var last = frag.lastChild;
+          var sel = global.getSelection();
+          var range = (sel && sel.rangeCount && sel.anchorNode && aBox.contains(sel.anchorNode))
+            ? sel.getRangeAt(0) : null;
+          if (!range) {
+            range = document.createRange();
+            range.selectNodeContents(aBox);
+            range.collapse(false);
+          }
+          range.deleteContents();
+          range.insertNode(frag);
+          if (last) { range.setStartAfter(last); range.collapse(true); }
+          if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+        }
+        aBox.addEventListener('paste', function (e) {
+          if (!KB.Editor || !KB.Editor.mdToHtml) return;
+          var cd = e.clipboardData || global.clipboardData;
+          var text = '', html = '';
+          try { text = cd.getData('text/plain') || ''; } catch (err) {}
+          try { html = cd.getData('text/html') || ''; } catch (err) {}
+          var looksMd = KB.Editor.looksLikeMarkdown
+            ? KB.Editor.looksLikeMarkdown(text, { mode: 'card' })
+            : /(\$\$|^[ \t]{0,3}#{1,6}[ \t]|\*\*|^[ \t]*[-*+][ \t])/m.test(text);
+          if (html && KB.Editor.sanitizePastedHtml &&
+              (/(<(?:table|thead|tbody|tr|td|th|strong|b|em|i|u|h[1-6]|ul|ol|li|img|pre|code|a|blockquote)[\s>])/i.test(html) ||
+               (/\bstyle\s*=/i.test(html) && !looksMd))) {
+            var clean = KB.Editor.sanitizePastedHtml(html);
+            if (clean) { e.preventDefault(); insertHtmlAtCursor(clean); return; }
+          }
+          if (!looksMd) return;
+          e.preventDefault();
+          var src = KB.Editor.normalizeMathBlocks ? KB.Editor.normalizeMathBlocks(text) : text;
+          insertHtmlAtCursor(KB.Editor.mdToHtml(src, { paraJoin: '\n' }));
+        });
+        /* BIU 快捷键跟卡片页编辑器同口径，手机与国产内核不靠浏览器默认行为 */
+        aBox.addEventListener('keydown', function (e) {
+          if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+          var k = (e.key || '').toLowerCase();
+          var cmd = k === 'b' ? 'bold' : k === 'i' ? 'italic' : k === 'u' ? 'underline' : '';
+          if (!cmd) return;
+          e.preventDefault();
+          aBox.focus();
+          try { document.execCommand(cmd, false, null); } catch (err) {}
+        });
         global.requestAnimationFrame(function () {
           if (confirmOv) confirmOv.classList.add('show');
         });
         function finish(v) { closeConfirm(); resolve(v); }
+        confirmOv.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish({ ok: false }); }
+        });
         confirmOv.querySelector('.mycards-btn-cancel').addEventListener('click', function () {
           finish({ ok: false });
         });
@@ -278,13 +336,16 @@
             global.localStorage.setItem(cfg.storage.cardsLastCfg,
               JSON.stringify({ subject: subjSel.value, chapter: chapSel.value }));
           } catch (e) {}
+          var editedHtml = aBox.innerHTML.trim();
+          if (!aBox.textContent.trim() && !/<img\b/i.test(editedHtml)) editedHtml = '';
           finish({
             ok: true,
             question: qBox.textContent || qText,
             originalQuestion: qText,
-            answerHtml: answerHtml,
+            answerHtml: sanitizePreview(editedHtml),
             subject: subjSel.value,
-            chapter: chapSel.value
+            chapter: chapSel.value,
+            qid: qidInput.value.trim()
           });
         });
         confirmOv.addEventListener('click', function (e) {
@@ -404,7 +465,7 @@
           } else {
             askSave(c2.q, c2.ans).then(function (res) {
               if (!res || !res.ok) return;
-              var r = saveCard(res.question, res.answerHtml, res.subject, res.chapter, res.originalQuestion);
+              var r = saveCard(res.question, res.answerHtml, res.subject, res.chapter, res.originalQuestion, res.qid);
               if (r && r.ok) {
                 linkCard(c2.idx, r.id);
                 btn.classList.add('saved');
