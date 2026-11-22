@@ -206,6 +206,16 @@
             });
     }
 
+    /* 表格块判据：相邻两行分别为表格行与分隔行时认作表格，
+       与 mdToHtml 共用 isTableRow / isTableSep，不依赖表格在段中的位置。 */
+    function hasTableBlock(s) {
+        var lines = String(s == null ? '' : s).split('\n');
+        for (var i = 0; i + 1 < lines.length; i++) {
+            if (isTableRow(lines[i]) && isTableSep(lines[i + 1])) return true;
+        }
+        return false;
+    }
+
     /* 粘贴内容是否像 Markdown：两处判据不同，按 mode 选择，不各自维护一份正则 */
     function looksLikeMarkdown(s, opt) {
         var mode = (opt && opt.mode) || 'card';
@@ -213,7 +223,7 @@
             return /(^|\n)\s{0,3}#{1,6}\s+/.test(s) ||
                 /\*\*[^*\n]+\*\*/.test(s) ||
                 /(^|\n)\s*([-*+]|\d+[.)])\s+/.test(s) ||
-                /(^|\n)\s*\|.+\|\s*$/.test(s) ||
+                hasTableBlock(s) ||
                 /^\s*>\s?/m.test(s);
         }
         return /(^|\n)\s{0,3}#{1,6}\s/.test(s) ||
