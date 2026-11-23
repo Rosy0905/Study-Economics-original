@@ -255,6 +255,13 @@
         background: var(--mc-card-15); color: var(--mc-card-16); padding: 0 12px; border-radius: 40px;
         font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
     }
+    /* 手动设过缩进的卡：编辑区勾选框前的小标签，说明这张卡不跟章节默认值走 */
+    .answer-field-head .indent-manual-tag {
+        margin-left: auto; flex-shrink: 0;
+        background: var(--mc-card-35); color: var(--mc-muted-fg);
+        padding: 2px 9px; border-radius: 40px;
+        font-size: 10.5px; font-weight: 500;
+    }
     .card-item.favorited .card-header .label .tag { background: var(--mc-card-17); color: var(--mc-card-18); }
     .card-item.favorited .card-header .label .qid { color: var(--mc-card-19); }
     .card-item.favorited .toggle-hint { color: var(--mc-card-20); opacity: 0.9; }
@@ -420,6 +427,26 @@
     .card-answer .answer-inner hr, .rich-editor hr {
         border: none; border-top: 1px solid var(--mc-card-42); margin: 12px 0 12px 2em; width: calc(100% - 2em);
     }
+    /* 顶格卡：正文与所有块级一起回到内容区左边缘，宽度还原到满格。 */
+    .card-answer.flush .answer-inner,
+    .card-answer.flush .answer-inner p,
+    .card-answer.flush .answer-inner p.hang { text-indent: 0; }
+    .card-answer.flush .answer-inner p:has(.katex-display) { margin-left: 0; }
+    .card-answer.flush .answer-inner ul,
+    .card-answer.flush .answer-inner ol { margin: .4em 0; width: 100%; }
+    .card-answer.flush .answer-inner blockquote { margin: .5em 0; width: 100%; }
+    .card-answer.flush .answer-inner table { margin: 6px 0; width: 100%; }
+    .card-answer.flush .answer-inner pre { margin: .5em 0; width: 100%; }
+    .card-answer.flush .answer-inner hr { margin: 12px 0; width: 100%; }
+    .rich-editor.flush,
+    .rich-editor.flush p,
+    .rich-editor.flush p.hang { text-indent: 0; }
+    .rich-editor.flush p:has(.katex-display) { margin-left: 0; }
+    .rich-editor.flush table { margin: 8px 0; width: 100%; }
+    .rich-editor.flush blockquote { margin: .5em 0; width: 100%; }
+    .rich-editor.flush ul, .rich-editor.flush ol { margin: .4em 0; width: 100%; }
+    .rich-editor.flush pre { margin: .5em 0; width: 100%; }
+    .rich-editor.flush hr { margin: 12px 0; width: 100%; }
     .card-answer .answer-inner a, .rich-editor a { color: var(--mc-card-43); }
     /* 答案区加粗取 700，字色由答案区统一规则接管 */
     .card-answer .answer-inner b, .card-answer .answer-inner strong { font-weight: 700; }
@@ -612,6 +639,19 @@
         .ch-item .ch-mini:hover { background: var(--mc-card-35); }
     }
     .ch-item .ch-mini.ok { background: var(--mc-cancel-bg); color: var(--mc-title-fg); font-weight: 600; }
+    /* 章节默认排版标记：绿点=新卡默认缩进，灰点=顶格；点开选应用范围 */
+    .ch-item .ch-indent {
+        display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+        font-size: 11px; color: var(--mc-muted-fg); cursor: pointer; user-select: none;
+        padding: 2px 7px; border-radius: 8px; border: 1px solid var(--mc-dialog-24);
+        transition: background .12s, color .12s;
+    }
+    .ch-item .ch-indent i { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-dialog-24); }
+    .ch-item .ch-indent.on { color: var(--mc-primary-bg); border-color: var(--mc-primary-bg); background: var(--mc-card-35); }
+    .ch-item .ch-indent.on i { background: var(--mc-primary-bg); }
+    @media (hover: hover) and (pointer: fine) {
+        .ch-item .ch-indent:hover { filter: brightness(.96); }
+    }
     /* 重命名的「保存」比通用小按钮再明显一点：悬停底色加深一档，落一层极轻阴影 */
     @media (hover: hover) and (pointer: fine) {
         .ch-item .ch-mini.ok:hover {
@@ -624,6 +664,23 @@
         outline: none; font-family: inherit; color: var(--mc-page-fg);
     }
     .ch-empty { padding: 16px 8px; text-align: center; color: var(--mc-muted-fg); font-size: 12.5px; line-height: 1.8; }
+
+    /* 答案标签行：左边标题、右边首行缩进勾选框，不额外占一行 */
+    .answer-field-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .answer-field-head .field-label { margin: 0; }
+    .indent-toggle {
+        display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+        font-size: 12.5px; color: var(--mc-title-fg); cursor: pointer; user-select: none;
+        padding: 4px 2px;
+    }
+    .indent-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .indent-toggle .it-box {
+        width: 15px; height: 15px; border-radius: 4px; flex-shrink: 0;
+        border: 1.5px solid var(--mc-input-border); background: var(--mc-white);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 700; color: transparent; line-height: 1;
+    }
+    .indent-toggle.active .it-box { background: var(--mc-primary-bg); border-color: var(--mc-primary-bg); color: var(--mc-white); }
 
     .has-img-toggle {
         display: inline-flex; align-items: center; gap: 6px;
@@ -806,6 +863,35 @@
         margin-bottom: 16px; max-height: 40vh; overflow-y: auto;
     }
     .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    /* 章节缩进弹窗：弹层按按钮总宽收窄，四个选项固定一行；字号比通用确认弹窗小一档 */
+    #indentOverlay .confirm-modal { width: min(430px, calc(100vw - 32px)); padding: 18px 20px 16px; }
+    /* 标题以全角引号开头，字形自带左留白，首行回缩一点才与下方文字齐平 */
+    #indentOverlay .confirm-title { font-size: 14px; margin-bottom: 6px; text-indent: -0.16em; }
+    #indentOverlay .confirm-msg { font-size: 12.5px; line-height: 1.6; margin-bottom: 14px; }
+    .indent-choices { justify-content: center; flex-wrap: nowrap; gap: 8px; }
+    /* 四个按钮共用同一字号与字重，只在底色上分主次 */
+    .btn-choice {
+        flex: 0 0 auto;
+        border: 1px solid var(--mc-input-border); background: var(--mc-card-35); color: var(--mc-title-fg);
+        border-radius: 8px; padding: 8px 12px;
+        font-size: 12.5px; font-family: inherit; cursor: pointer; font-weight: 500; white-space: nowrap;
+        line-height: 1.2;
+        transition: background .15s, border-color .15s, filter .15s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .btn-choice:hover { filter: brightness(.97); }
+    }
+    .btn-choice:active { filter: brightness(.94); }
+    .btn-choice:focus-visible { outline: 2px solid var(--mc-focus-border); outline-offset: 2px; }
+    /* 取消：同字号同字重，只去掉底色和边框来降级 */
+    .btn-choice.ghost {
+        border-color: transparent; background: transparent; color: var(--mc-editor-23);
+    }
+    @media (hover: hover) and (pointer: fine) {
+        .btn-choice.ghost:hover { background: var(--mc-card-35); filter: none; }
+    }
+    /* 窄屏确实放不下时才折行 */
+    @media (max-width: 460px) { .indent-choices { flex-wrap: wrap; } }
 
     #tableOverlay { z-index: 1100; }
     .table-modal {

@@ -76,6 +76,10 @@
         if (typeof o.qid !== 'string') o.qid = '';
         if (typeof o.hasImage !== 'boolean') o.hasImage = false;
         if (typeof o.fav !== 'boolean') o.fav = false;
+        /* 缩进由卡片自己记住；旧卡缺字段按顶格处理。
+           indentManual 标记这张卡的缩进是手动设的，批量改时可据此跳过。 */
+        if (typeof o.indented !== 'boolean') o.indented = false;
+        if (typeof o.indentManual !== 'boolean') o.indentManual = false;
         if (typeof o.created !== 'number') o.created = Date.now();
         if (!o.id) o.id = uid();
         o.question = cleanQ(o.question);
@@ -149,6 +153,89 @@
         cards.forEach(function (c) { pushChapter(c.subject, c.chapter); });
     }
 
+    /* ---- 章节默认缩进 ----
+       新卡按所属章节的默认值决定缩进；映射键为 分类|章节，
+       只存缩进为 true 的章节，缺失一律按顶格。 */
+    var indentCfg = {};
+    function indentKey(subject, chapter) {
+        return normSubject(subject) + '|' + String(chapter || '').trim();
+    }
+    function loadIndentCfg() {
+        var got = KB.Store.get('cards', 'indentCfg', null);
+        indentCfg = (got && typeof got === 'object' && !Array.isArray(got)) ? got : {};
+    }
+    function persistIndentCfg() {
+        return KB.Store.set('cards', 'indentCfg', indentCfg);
+    }
+    function getIndentDefault(subject, chapter) {
+        return indentCfg[indentKey(subject, chapter)] === true;
+    }
+    function setIndentDefault(subject, chapter, on) {
+        var k = indentKey(subject, chapter);
+        if (on) indentCfg[k] = true; else delete indentCfg[k];
+        return persistIndentCfg();
+    }
+    /* 批量改本章缩进。skipManual 为真时跳过手动设过的卡；
+       改过的卡清掉手动标记——它的值已由批量操作统一，不再算手动设置。 */
+    function applyIndentToChapter(subject, chapter, on, skipManual) {
+        var s = normSubject(subject), n = String(chapter || '').trim();
+        var hit = 0;
+        cards.forEach(function (c) {
+            if (normSubject(c.subject) !== s || (c.chapter || '').trim() !== n) return;
+            if (skipManual && c.indentManual) return;
+            c.indented = !!on;
+            c.indentManual = false;
+            hit++;
+        });
+        return hit;
+    }
+    /* 本章手动设过缩进的卡片数，供批量操作前提示 */
+    function countManualIndent(subject, chapter) {
+        var s = normSubject(subject), n = String(chapter || '').trim();
+        var hit = 0;
+        cards.forEach(function (c) {
+            if (normSubject(c.subject) === s && (c.chapter || '').trim() === n && c.indentManual) hit++;
+        });
+        return hit;
+    }
+    /* 章节改名：默认缩进设置跟着搬到新名下，否则新章节会回落到顶格 */
+    function renameIndentKey(subject, oldName, newName) {
+        var from = indentKey(subject, oldName), to = indentKey(subject, newName);
+        if (indentCfg[from] === undefined || from === to) return;
+        indentCfg[to] = true;
+        delete indentCfg[from];
+        persistIndentCfg();
+    }
+    /* 章节删除：连同它的默认缩进一起清掉，避免日后同名章节继承旧设置 */
+    function dropIndentKey(subject, chapter) {
+        var k = indentKey(subject, chapter);
+        if (indentCfg[k] === undefined) return;
+        delete indentCfg[k];
+        persistIndentCfg();
+    }
+    /* 导入章节默认值：按备份覆盖。
+       备份只记录了缩进为 true 的章节（顶格不存键），所以先按备份的章节范围
+       把本机同名章节的键清掉，再回填备份里为 true 的，等价于「以备份为准」。 */
+    function importIndentCfg(got, chapterScope) {
+        var cfg = (got && typeof got === 'object' && !Array.isArray(got)) ? got : {};
+        /* 备份涉及的章节一律以备份为准：备份缩进就设上，备份顶格就清掉本机的 */
+        if (chapterScope && typeof chapterScope === 'object') {
+            Object.keys(chapterScope).forEach(function (s) {
+                var list = chapterScope[s];
+                if (!Array.isArray(list)) return;
+                list.forEach(function (n) {
+                    var k = indentKey(s, n);
+                    if (cfg[k] === true) indentCfg[k] = true; else delete indentCfg[k];
+                });
+            });
+        }
+        /* 备份里还带其它章节的设置时一并照搬 */
+        Object.keys(cfg).forEach(function (k) {
+            if (cfg[k] === true) indentCfg[k] = true; else delete indentCfg[k];
+        });
+        persistIndentCfg();
+    }
+
     /* 配额满时本页沿用原版措辞，保住「图片可能太大」的归因。
        通过可选参数注入，不改全站默认文案，其它页面不受影响。 */
     var QUOTA_MSG = '⚠️ 存储空间不足，图片可能太大了';
@@ -179,6 +266,7 @@
         SUBJECTS.forEach(function (s) { chaptersBySubject[s] = []; });
         KB.Store.remove('cards', 'items');
         KB.Store.remove('cards', 'chapters');
+        KB.Store.remove('cards', 'indentCfg');
         KB.Store.remove('cards', 'filters');
         orderState = { mode: 'auto', seq: {} };
         KB.Store.remove('cards', 'order');
@@ -358,13 +446,37 @@
 
     /* ---- 备份 JSON：v3 形状，blobs 与整站备份同一格式 ---- */
     function buildBackup(picked, blobs) {
+        /* 章节只带选中卡片实际用到的，导出后不会夹带整站的空章节；
+           顺序沿用本机的章节表顺序。 */
+        var used = {};
+        SUBJECTS.forEach(function (s) { used[s] = {}; });
+        picked.forEach(function (c) {
+            var s = normSubject(c.subject), n = (c.chapter || '').trim();
+            if (n) used[s][n] = 1;
+        });
         var chapters = {};
-        SUBJECTS.forEach(function (s) { chapters[s] = chList(s).slice(); });
+        SUBJECTS.forEach(function (s) {
+            chapters[s] = chList(s).filter(function (n) { return used[s][n]; });
+            /* 不在章节表里的章节（数据被手工改过）也带上，按出现顺序补在后面 */
+            picked.forEach(function (c) {
+                var n = (c.chapter || '').trim();
+                if (normSubject(c.subject) === s && n && chapters[s].indexOf(n) < 0) chapters[s].push(n);
+            });
+        });
+        /* 章节默认值也只带这些章节的，避免把无关章节的设置捎走 */
+        var cfg = {};
+        SUBJECTS.forEach(function (s) {
+            chapters[s].forEach(function (n) {
+                var k = indentKey(s, n);
+                if (indentCfg[k] === true) cfg[k] = true;
+            });
+        });
         return {
             app: 'my-cards',
             version: 3,
             exportedAt: new Date().toISOString(),
             chapters: chapters,
+            indentCfg: cfg,
             cards: sortCards(picked.slice()),
             blobs: blobs || []
         };
@@ -384,7 +496,9 @@
         } else {
             throw new Error('bad format');
         }
-        return { list: list, chapters: chapters, legacyChapters: legacyChapters };
+        var indentDefaults = (data && data.indentCfg && typeof data.indentCfg === 'object' && !Array.isArray(data.indentCfg))
+            ? data.indentCfg : null;
+        return { list: list, chapters: chapters, legacyChapters: legacyChapters, indentCfg: indentDefaults };
     }
 
     function init(opts) {
@@ -396,6 +510,7 @@
         });
         reload();
         loadChapters();
+        loadIndentCfg();
         loadOrder();
         syncOrder();
     }
@@ -417,6 +532,14 @@
         normalizeChapters: normalizeChapters,
         persist: persist,
         persistChaptersOnly: persistChaptersOnly,
+        loadIndentCfg: loadIndentCfg,
+        getIndentDefault: getIndentDefault,
+        setIndentDefault: setIndentDefault,
+        applyIndentToChapter: applyIndentToChapter,
+        countManualIndent: countManualIndent,
+        renameIndentKey: renameIndentKey,
+        dropIndentKey: dropIndentKey,
+        importIndentCfg: importIndentCfg,
 
         normSubject: normSubject,
         chList: chList,

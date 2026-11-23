@@ -91,6 +91,9 @@
     var indexInput = document.getElementById('indexInput');
     var hasImgToggle = document.getElementById('hasImgToggle');
     var hasImgInput = document.getElementById('hasImgInput');
+    var indentToggle = document.getElementById('indentToggle');
+    var indentInput = document.getElementById('indentInput');
+    var indentManualTag = document.getElementById('indentManualTag');
     var questionInput = document.getElementById('questionInput');
     var answerEditor = document.getElementById('answerEditor');
     var closeModalBtn = document.getElementById('closeModalBtn');
@@ -131,6 +134,14 @@
     var confirmOkBtn = document.getElementById('confirmOkBtn');
     var confirmCancelBtn = document.getElementById('confirmCancelBtn');
 
+    var indentOverlay = document.getElementById('indentOverlay');
+    var indentDlgTitle = document.getElementById('indentDlgTitle');
+    var indentDlgMsg = document.getElementById('indentDlgMsg');
+    var indentOnlyNew = document.getElementById('indentOnlyNew');
+    var indentApplyAll = document.getElementById('indentApplyAll');
+    var indentKeepManual = document.getElementById('indentKeepManual');
+    var indentDlgCancel = document.getElementById('indentDlgCancel');
+
     var clearChoiceOverlay = document.getElementById('clearChoiceOverlay');
     var clearChoiceSub = document.getElementById('clearChoiceSub');
     var clearChoiceCancelBtn = document.getElementById('clearChoiceCancelBtn');
@@ -170,11 +181,13 @@
     var pickSelected = new Set();
     var pickMode = 'export';          // export | delete，勾选列表由导出与部分删除共用
     var confirmAction = null;
+    var indentAction = null;      // 章节缩进三选弹窗：{ subject, chapter, on }
     var openIds = new Set();
     var savedRange = null;
     var toastTimer = null;
     var renamingName = null;
     var editorChapter = '';   // 编辑弹层里当前选中的章节
+    var indentTouched = false;   // 新建卡时用户是否手动点过缩进勾选框
     var aiImpPairs = [];      // [{q, a}] 从 AI 对话里配好的一问一答
     var aiImpPicked = new Set();
 
@@ -186,6 +199,7 @@
         return editorOverlay.classList.contains('show') ||
                tableOverlay.classList.contains('show') ||
                confirmOverlay.classList.contains('show') ||
+               indentOverlay.classList.contains('show') ||
                clearOverlay.classList.contains('show') ||
                clearChoiceOverlay.classList.contains('show') ||
                aiImpOverlay.classList.contains('show') ||
@@ -346,7 +360,10 @@
         cards.forEach(function (c) {
             if (normSubject(c.subject) === s && (c.chapter || '').trim() === oldName) c.chapter = newName;
         });
+        M.renameIndentKey(s, oldName, newName);
         persist();
+        /* 编辑器当前正选着这个章节时，一起换成新名，避免存到已不存在的章节上 */
+        if (editorChapter === oldName) setEditorChapter(newName);
         updateChapterFilterOptions();
         if (filterChapter.value === chFilterValue(s, oldName)) filterChapter.value = chFilterValue(s, newName);
         render();
@@ -362,7 +379,10 @@
         cards.forEach(function (c) {
             if (normSubject(c.subject) === s && (c.chapter || '').trim() === name) c.chapter = '';
         });
+        M.dropIndentKey(s, name);
         persist();
+        /* 编辑器正选着被删的章节时退回未选状态 */
+        if (editorChapter === name) setEditorChapter('');
         updateChapterFilterOptions();
         if (filterChapter.value === chFilterValue(s, name)) filterChapter.value = 'all';
         render();
@@ -453,12 +473,16 @@
                 return;
             }
             var on = editorChapter === ch;
+            var ind = M.getIndentDefault(s, ch);
             html += '<div class="ch-item' + (on ? ' selected' : '') + '"' +
                         (canDragChapters() ? ' draggable="true"' : '') +
                         ' data-name="' + safeText(ch) + '">' +
                         '<span class="ch-grip" title="按住拖动排序">\u283f</span>' +
                         '<span class="ch-box">' + (on ? '\u2713' : '') + '</span>' +
                         '<span class="ch-item-name">' + safeText(ch) + '</span>' +
+                        '<span class="ch-indent' + (ind ? ' on' : '') + '" data-act="indent" data-name="' + safeText(ch) + '" title="本章新卡默认排版，点开可设置">' +
+                            '<i></i>' + (ind ? '缩进' : '顶格') +
+                        '</span>' +
                         '<span class="ch-item-count">' + chapterCount(ch, s) + ' 张</span>' +
                         '<button type="button" class="ch-mini" data-act="rename" data-name="' + safeText(ch) + '" title="重命名">✏️</button>' +
                         '<button type="button" class="ch-mini del" data-act="del" data-name="' + safeText(ch) + '" title="删除章节">🗑️</button>' +
@@ -481,9 +505,25 @@
         chapterAddIcon.disabled = !chapterNameInput.value.trim();
     }
 
+    /* 勾选框的值与该章节默认值不同，才算这张卡被手动设过；
+       改回与章节一致就等于交还给章节规则，不再留手动标记 */
+    function isIndentManualNow() {
+        return !!indentInput.checked !== M.getIndentDefault(editorSubject(), editorChapter);
+    }
+
     function setEditorChapter(name) {
         editorChapter = (name || '').trim();
         renderChapterTrigger();
+        if (editingId) return;
+        /* 新建卡尚未提交时，章节一换就把勾选框同步成该章默认值；
+           用户已手动点过则以手动为准，不再被章节覆盖。 */
+        if (!indentTouched) {
+            var on = M.getIndentDefault(editorSubject(), editorChapter);
+            indentInput.checked = on;
+            indentToggle.classList.toggle('active', on);
+            answerEditor.classList.toggle('flush', !on);
+        }
+        indentManualTag.hidden = !(indentTouched && isIndentManualNow());
     }
     function renderChapterTrigger() {
         chapterTriggerText.textContent = editorChapter || '选择章节';
@@ -511,8 +551,7 @@
     subjectSelect.addEventListener('change', function () {
         var s = editorSubject();
         if (editorChapter && chList(s).indexOf(editorChapter) < 0) {
-            editorChapter = '';
-            renderChapterTrigger();
+            setEditorChapter('');
         }
         if (isChapterPopOpen()) renderChapterPop();
     });
@@ -548,6 +587,15 @@
     chapterPopList.addEventListener('click', function (e) {
         var t = e.target;
         if (!t || !t.closest) return;
+
+        var ind = t.closest('.ch-indent');
+        if (ind) {
+            e.stopPropagation();
+            var name = ind.dataset.name;
+            var cur = M.getIndentDefault(editorSubject(), name);
+            openIndentDialog(editorSubject(), name, !cur);
+            return;
+        }
 
         var btn = t.closest('.ch-mini');
         if (btn) {
@@ -728,7 +776,7 @@
                     : '<span class="q-text card-empty-hint">（题目未输入）</span>') +
                 '<span class="toggle-hint">(点击展开答案)</span>' +
             '</div>' +
-            '<div class="card-answer' + (isOpen ? ' open' : '') + '" data-id="' + safeText(c.id) + '">' +
+            '<div class="card-answer' + (isOpen ? ' open' : '') + (c.indented ? '' : ' flush') + '" data-id="' + safeText(c.id) + '">' +
                 '<div class="answer-inner">' + answerHtml + '</div>' +
             '</div>' +
         '</div>';
@@ -1018,6 +1066,96 @@
         if (fn) fn();
     });
 
+    /* 章节缩进三选：点小圆点后选「只改新卡默认 / 连现有卡片一起改 / 取消」 */
+    function openIndentDialog(subject, chapter, on) {
+        indentAction = { subject: subject, chapter: chapter, on: on };
+        indentDlgTitle.textContent = '「' + chapter + '」设为' + (on ? '首行缩进' : '顶格');
+        /* 本章有手动设过的卡时才提示，并多给一个「跳过这 N 张」的选择 */
+        var manual = M.countManualIndent(subject, chapter);
+        if (manual > 0) {
+            indentDlgMsg.textContent = '本章有 ' + manual + ' 张是你手动设的，可以跳过它们。';
+            indentKeepManual.hidden = false;
+        } else {
+            indentDlgMsg.textContent = '这个设置要应用到哪些卡片？';
+            indentKeepManual.hidden = true;
+        }
+        indentOverlay.classList.add('show');
+        lockBody(true);
+    }
+    function closeIndentDialog() {
+        indentAction = null;
+        indentOverlay.classList.remove('show');
+        if (!anyOverlayOpen()) lockBody(false);
+    }
+    indentDlgCancel.addEventListener('click', closeIndentDialog);
+    indentOverlay.addEventListener('click', function (e) {
+        if (e.target === indentOverlay) closeIndentDialog();
+    });
+    indentOnlyNew.addEventListener('click', function () {
+        var a = indentAction;
+        closeIndentDialog();
+        if (!a) return;
+        M.setIndentDefault(a.subject, a.chapter, a.on);
+        /* 正在新建这张卡、且当前章节就是被改的章节、也没手动点过勾选框时，
+           勾选框跟着新默认值走 */
+        if (!editingId && !indentTouched &&
+            normSubject(editorSubject()) === normSubject(a.subject) &&
+            (editorChapter || '').trim() === String(a.chapter || '').trim()) {
+            indentInput.checked = !!a.on;
+            indentToggle.classList.toggle('active', !!a.on);
+            answerEditor.classList.toggle('flush', !a.on);
+        }
+        if (isChapterPopOpen()) renderChapterPop();
+        showToast(a.on ? '✅ 本章新卡默认改为缩进' : '✅ 本章新卡默认改为顶格');
+    });
+    indentApplyAll.addEventListener('click', function () {
+        var a = indentAction;
+        closeIndentDialog();
+        if (!a) return;
+        M.setIndentDefault(a.subject, a.chapter, a.on);
+        var n = M.applyIndentToChapter(a.subject, a.chapter, a.on);
+        persist();
+        render();
+        /* 正在编辑的那张卡若属于本章，编辑器里的勾选框同步刷到最新状态 */
+        if (editingId) {
+            var cur = cards.find(function (x) { return x.id === editingId; });
+            if (cur && normSubject(cur.subject) === normSubject(a.subject) &&
+                (cur.chapter || '').trim() === String(a.chapter || '').trim()) {
+                indentInput.checked = !!cur.indented;
+                indentToggle.classList.toggle('active', !!cur.indented);
+                answerEditor.classList.toggle('flush', !cur.indented);
+                /* 批量改由章节规则统一，不算手动设置，标记同步回卡片的值 */
+                indentTouched = false;
+                indentManualTag.hidden = !cur.indentManual;
+            }
+        }
+        if (isChapterPopOpen()) renderChapterPop();
+        showToast('✅ 本章 ' + n + ' 张卡片已改为' + (a.on ? '缩进' : '顶格'));
+    });
+    /* 跳过手动卡：只改没手动设过的那部分 */
+    indentKeepManual.addEventListener('click', function () {
+        var a = indentAction;
+        closeIndentDialog();
+        if (!a) return;
+        M.setIndentDefault(a.subject, a.chapter, a.on);
+        var n = M.applyIndentToChapter(a.subject, a.chapter, a.on, true);
+        persist();
+        render();
+        if (editingId) {
+            var cur = cards.find(function (x) { return x.id === editingId; });
+            if (cur && normSubject(cur.subject) === normSubject(a.subject) &&
+                (cur.chapter || '').trim() === String(a.chapter || '').trim()) {
+                indentInput.checked = !!cur.indented;
+                indentToggle.classList.toggle('active', !!cur.indented);
+                answerEditor.classList.toggle('flush', !cur.indented);
+                indentTouched = false;
+                indentManualTag.hidden = !cur.indentManual;
+            }
+        }
+        if (isChapterPopOpen()) renderChapterPop();
+        showToast('✅ 已改 ' + n + ' 张，手动设过的保留不动');
+    });
+
     function openConfirmDeleteCard(card) {
         var preview = (card.question || '').slice(0, 60);
         openConfirm({
@@ -1136,6 +1274,7 @@
         clearImgSelection();
         savedRange = null;
         closeChapterPop();
+        indentTouched = false;
 
         if (id) {
             var c = cards.find(function (x) { return x.id === id; });
@@ -1144,6 +1283,10 @@
             indexInput.value = c.qid || '';
             hasImgInput.checked = !!c.hasImage;
             hasImgToggle.classList.toggle('active', !!c.hasImage);
+            indentInput.checked = !!c.indented;
+            indentToggle.classList.toggle('active', !!c.indented);
+            /* 手动设过缩进的卡在勾选框前带一枚「手动」，说明它不跟章节默认值走 */
+            indentManualTag.hidden = !c.indentManual;
             questionInput.value = c.question || '';
             answerEditor.innerHTML = c.answerHtml || '';
             subjectSelect.value = (SUBJECTS.indexOf(c.subject) >= 0) ? c.subject : SUBJECTS[0];
@@ -1153,6 +1296,7 @@
             indexInput.value = '';
             hasImgInput.checked = false;
             hasImgToggle.classList.remove('active');
+            indentManualTag.hidden = true;
             questionInput.value = '';
             answerEditor.innerHTML = '';
             /* 新建时默认沿用当前筛选的章节（只在分类对得上时才沿用），省一次选择 */
@@ -1166,6 +1310,7 @@
             /* 优先取该分类上次使用的章节；章节已删则回退到当前筛选章节或空 */
             var mem = lastChapterBySubject[defSubj] || '';
             if (mem && chList(defSubj).indexOf(mem) >= 0) def = mem;
+            /* 新卡按该章节的默认排版起步，未设置的章节一律顶格（setEditorChapter 内同步勾选框） */
             setEditorChapter(def);
         }
 
@@ -1174,6 +1319,7 @@
         answerEditor.style.height = '';
         KB.ImageStore.hydrate(answerEditor, 'img');
         refreshHang(answerEditor);
+        answerEditor.classList.toggle('flush', !indentInput.checked);
         editorOverlay.classList.add('show');
         lockBody(true);
         /* 新建时直接聚焦题目输入框，不给分类下拉自动对焦 */
@@ -1241,6 +1387,9 @@
                     c.hasImage = hasImage;
                     c.question = q;
                     c.answerHtml = finalHtml;
+                    c.indented = !!indentInput.checked;
+                    /* 编辑时动过勾选框才重算手动标记：仍与章节不同算手动，改回一致则撤销 */
+                    if (indentTouched) c.indentManual = isIndentManualNow();
                     c.updated = Date.now();
                 }
             } else {
@@ -1253,6 +1402,8 @@
                     question: q,
                     answerHtml: finalHtml,
                     fav: false,
+                    indented: !!indentInput.checked,
+                    indentManual: indentTouched && isIndentManualNow(),
                     created: Date.now()
                 });
             }
@@ -1280,6 +1431,13 @@
 
     hasImgInput.addEventListener('change', function () {
         hasImgToggle.classList.toggle('active', this.checked);
+    });
+    indentInput.addEventListener('change', function () {
+        indentTouched = true;
+        indentToggle.classList.toggle('active', this.checked);
+        answerEditor.classList.toggle('flush', !this.checked);
+        /* 改回与章节默认值一致时，「手动」立刻撤掉，卡片交还给章节规则 */
+        indentManualTag.hidden = !isIndentManualNow();
     });
 
     editorOverlay.addEventListener('click', function (e) {
@@ -2294,6 +2452,7 @@
             var newChapters = [];    /* 新格式按分类分开的章节表，确认后才落表 */
             var legacyCh = [];
             var blobs = [];
+            var incomingIndentCfg = null;
             try {
                 var parsed = JSON.parse(ev.target.result);
                 if (Array.isArray(parsed)) {
@@ -2301,6 +2460,9 @@
                 } else if (parsed && Array.isArray(parsed.cards)) {
                     incoming = parsed.cards;
                     blobs = Array.isArray(parsed.blobs) ? parsed.blobs : [];
+                    if (parsed.indentCfg && typeof parsed.indentCfg === 'object' && !Array.isArray(parsed.indentCfg)) {
+                        incomingIndentCfg = parsed.indentCfg;
+                    }
                     if (parsed.chapters && !Array.isArray(parsed.chapters) && typeof parsed.chapters === 'object') {
                         SUBJECTS.forEach(function (s) {
                             if (Array.isArray(parsed.chapters[s])) {
@@ -2351,13 +2513,13 @@
                 title: '导入卡片',
                 msg: lines.join('\n'),
                 okText: '导入',
-                onOk: function () { doImport(incoming, newChapters, legacyCh, blobs); }
+                onOk: function () { doImport(incoming, newChapters, legacyCh, blobs, incomingIndentCfg); }
             });
         };
         reader.readAsText(file);
     });
 
-    function doImport(incoming, newChapters, legacyCh, blobs) {
+    function doImport(incoming, newChapters, legacyCh, blobs, incomingIndentCfg) {
         newChapters.forEach(function (c) { pushChapter(c.subject, c.name); });
 
         /* 备份里的图片先回库，正文的 idb: 引用才注得出水 */
@@ -2389,6 +2551,8 @@
                         question: cleanQ(item.question),
                         answerHtml: item.answerHtml || item.answer || '',
                         fav: !!item.fav,
+                        indented: !!item.indented,
+                        indentManual: !!item.indentManual,
                         created: item.created || Date.now()
                     };
                     fresh.push(card);
@@ -2412,6 +2576,14 @@
                 showToast('⚠️ 文件里没有可导入的卡片');
             } else {
                 normalizeChapters();
+                /* 备份章节范围，用于按备份覆盖本机同名章节的默认缩进 */
+                var scope = {};
+                newChapters.forEach(function (nc) {
+                    if (!scope[nc.subject]) scope[nc.subject] = [];
+                    if (scope[nc.subject].indexOf(nc.name) < 0) scope[nc.subject].push(nc.name);
+                });
+                /* 备份没带章节默认值（旧格式导出）时保持本机设置不动 */
+                if (incomingIndentCfg) M.importIndentCfg(incomingIndentCfg, scope);
                 persist();
                 M.syncOrder();
                 updateChapterFilterOptions();
@@ -2568,6 +2740,8 @@
                 question: q,
                 answerHtml: mdToHtml(p.a),
                 fav: false,
+                indented: M.getIndentDefault(subj, chName),
+                indentManual: false,
                 created: Date.now()
             });
             added++;
@@ -2854,6 +3028,9 @@
             return KB.ImageStore.exportRefs(list.map(function (c) { return c.answerHtml || ''; }))
                 .then(function (blobs) { return M.buildBackup(list, blobs); });
         },
-        parseBackup: M.parseBackup
+        parseBackup: M.parseBackup,
+        getIndentDefault: M.getIndentDefault,
+        setIndentDefault: M.setIndentDefault,
+        applyIndentToChapter: M.applyIndentToChapter
     };
 })(window);

@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="ui/tokens.css?v=20261113a">
 <link rel="stylesheet" href="theme/tokens.css?v=20261113a">
 <link rel="stylesheet" href="ui/section-nav.css?v=20261113a">
-<link rel="stylesheet" href="ui/mycards.css?v=20261113a">
+<link rel="stylesheet" href="ui/mycards.css?v=20261123c">
 <link rel="stylesheet" href="ui/imgctl.css?v=20261113a">
 <link rel="stylesheet" href="ui/ai.css?v=20261113a">
 <link rel="stylesheet" href="ui/top-btn.css?v=20261113a">
@@ -145,10 +145,18 @@
 
                 <div class="field-gap"></div>
 
-                <label class="field-label">
-                    答案
-                    <span class="hint">富文本 · 表格 · 公式 · 图片</span>
-                </label>
+                <div class="answer-field-head">
+                    <label class="field-label" for="answerEditor">
+                        答案
+                        <span class="hint">富文本 · 表格 · 公式 · 图片</span>
+                    </label>
+                    <span class="indent-manual-tag" id="indentManualTag" hidden title="这张卡的缩进是手动设置的，不随章节默认值变化">手动</span>
+                    <label class="indent-toggle" id="indentToggle" title="勾选则本卡答案首行缩进，取消则整卡顶格">
+                        <input type="checkbox" id="indentInput">
+                        <span class="it-box">✓</span>
+                        <span class="it-text">首行缩进</span>
+                    </label>
+                </div>
                 <div class="rich-editor" id="answerEditor" contenteditable="true"
                      data-placeholder="在这里写下答案…&#10;&#10;公式写法：行内 $Q_d = a - bP$，独占一行 $$E_d = \frac{\Delta Q}{\Delta P}\cdot\frac{P}{Q}$$"></div>
 
@@ -203,6 +211,20 @@
             <div class="confirm-actions">
                 <button class="btn-ok btn-danger" id="confirmOkBtn">删除</button>
                 <button class="btn-cancel" id="confirmCancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 章节缩进：点小圆点后让用户选应用范围 -->
+    <div class="modal-overlay" id="indentOverlay">
+        <div class="confirm-modal">
+            <div class="confirm-title" id="indentDlgTitle">章节缩进设置</div>
+            <div class="confirm-msg" id="indentDlgMsg">这一章的卡片要用哪种排版？</div>
+            <div class="confirm-actions indent-choices">
+                <button class="btn-choice" id="indentOnlyNew">只改新卡</button>
+                <button class="btn-choice" id="indentApplyAll">全章都改</button>
+                <button class="btn-choice" id="indentKeepManual" hidden>全章改但跳过手动卡</button>
+                <button class="btn-choice ghost" id="indentDlgCancel">取消</button>
             </div>
         </div>
     </div>
@@ -345,12 +367,12 @@
 <script src="engine/blobstore.js?v=20261113a"></script>
 <script src="engine/image-store.js?v=20261113a"></script>
 <script src="engine/imgctl/core.js?v=20261113a"></script>
-<script src="engine/mycards/model.js?v=20261113a"></script>
+<script src="engine/mycards/model.js?v=20261123c"></script>
 <script src="engine/editor/core.js?v=20261113a"></script>
 <script src="nav.config.js?v=20261113a"></script>
 <script src="engine/section-nav.js?v=20261113a"></script>
 <script>if (window.KB && KB.SectionNav && window.MYCARDS_CONFIG) KB.SectionNav.mount({ current: MYCARDS_CONFIG.sectionNav });</script>
-<script src="engine/mycards/app.js?v=20261113a"></script>
+<script src="engine/mycards/app.js?v=20261123c"></script>
 <script>KB.Store.ready().then(function () { KB.MyCards.mount(); KB.__mcMounted = true; });</script>
 <script src="ai.config.js?v=20261113a"></script>
 <script src="engine/ai/common.js?v=20261113a"></script>
