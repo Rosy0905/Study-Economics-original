@@ -306,8 +306,8 @@
     .card-answer .answer-inner p:last-child { margin-bottom: 0; }
     /* 行首全角括号自带左留白，减 0.63em 使序号与正文首行齐平。 */
     .card-answer .answer-inner p.hang { text-indent: calc(2em - 0.63em); }
-    /* 独占一行的块级公式不缩进。 */
-    .card-answer .answer-inner p:has(.katex-display) { text-indent: 0; }
+    /* 独占一行的块级公式整体移到正文首行位置，不再靠首行缩进。 */
+    .card-answer .answer-inner p:has(.katex-display) { text-indent: 0; margin-left: 2em; }
     .card-answer .answer-inner img {
         /* 行内块排版：多张图可并排，图片后接文字不留空行。
            段内图片随段落 text-indent 对齐首行；只限宽不限高，宽高比不变。 */
@@ -318,14 +318,17 @@
     }
     /* 裸挂图片由容器 text-indent 对齐，多图并排时行首一张缩进、其余紧随。 */
     .card-answer .answer-inner > img { max-width: 100%; }
+    /* 块级内容（列表/引用/表格/代码/公式）整体左移到正文首行位置，宽度相应收窄防溢出；
+       text-indent 归零，避免继承容器的首行缩进让块内文字参差不齐。 */
     .card-answer .answer-inner ul,
-    .card-answer .answer-inner ol { padding-left: 1.6em; margin: .4em 0; }
+    .card-answer .answer-inner ol { padding-left: 1.6em; margin: .4em 0 .4em 2em; width: calc(100% - 2em); text-indent: 0; }
     .card-answer .answer-inner blockquote {
-        border-left: 4px solid var(--mc-card-33); padding-left: 12px; margin: .5em 0;
-        color: var(--mc-card-34);
+        border-left: 4px solid var(--mc-card-33); padding-left: 12px; margin: .5em 0 .5em 2em;
+        width: calc(100% - 2em); text-indent: 0; color: var(--mc-card-34);
     }
     .card-answer .answer-inner table {
-        border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; line-height: 1.55;
+        border-collapse: collapse; width: calc(100% - 2em); margin: 6px 0 6px 2em;
+        font-size: 13px; line-height: 1.55; text-indent: 0;
     }
     .card-answer .answer-inner th,
     .card-answer .answer-inner td {
@@ -396,9 +399,9 @@
     .card-item.favorited .card-answer .answer-inner strong { font-weight: 700; }
     .card-answer .answer-inner pre, .rich-editor pre {
         background: var(--mc-card-40); border: 1px solid var(--mc-card-41); border-radius: 10px;
-        padding: 10px 12px; margin: 0.5em 0; overflow-x: auto;
+        padding: 10px 12px; margin: 0.5em 0 0.5em 2em; width: calc(100% - 2em); overflow-x: auto;
         font-family: ui-monospace, Menlo, Consolas, monospace;
-        font-size: 13px; line-height: 1.6; white-space: pre;
+        font-size: 13px; line-height: 1.6; white-space: pre; text-indent: 0;
     }
     .card-answer .answer-inner code, .rich-editor code {
         background: var(--mc-card-35); padding: 1px 6px; border-radius: 5px;
@@ -415,7 +418,7 @@
     .card-answer .answer-inner .katex { font-size: 1.02em; }
     .card-answer .answer-inner .katex-display > .katex { font-size: 1.02em; }
     .card-answer .answer-inner hr, .rich-editor hr {
-        border: none; border-top: 1px solid var(--mc-card-42); margin: 12px 0;
+        border: none; border-top: 1px solid var(--mc-card-42); margin: 12px 0 12px 2em; width: calc(100% - 2em);
     }
     .card-answer .answer-inner a, .rich-editor a { color: var(--mc-card-43); }
     /* 答案区加粗取 700，字色由答案区统一规则接管 */
@@ -659,7 +662,7 @@
     /* 编辑态首行缩进与展开态一致。 */
     .rich-editor p { text-indent: 2em; }
     .rich-editor p.hang { text-indent: calc(2em - 0.63em); }
-    .rich-editor p:has(.katex-display) { text-indent: 0; }
+    .rich-editor p:has(.katex-display) { text-indent: 0; margin-left: 2em; }
     .rich-editor:empty::before {
         content: attr(data-placeholder);
         color: var(--mc-muted-fg); font-style: italic; pointer-events: none; white-space: pre-line;
@@ -682,11 +685,14 @@
     .rich-editor img.selected {
         box-shadow: 0 0 0 3px var(--mc-editor-04);
     }
-    .rich-editor table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; }
+    /* 块级内容与展开态同一套左移对齐；text-indent 归零避免继承后参差。 */
+    .rich-editor table { border-collapse: collapse; width: calc(100% - 2em); margin: 8px 0 8px 2em; font-size: 14px; text-indent: 0; }
     .rich-editor th, .rich-editor td {
         border: 1px solid var(--mc-editor-border); padding: 6px 10px; min-width: 40px; vertical-align: top;
     }
     .rich-editor th { background: var(--mc-card-35); font-weight: 600; text-align: left; }
+    .rich-editor blockquote { border-left: 4px solid var(--mc-card-33); padding-left: 12px; margin: .5em 0 .5em 2em; width: calc(100% - 2em); text-indent: 0; }
+    .rich-editor ul, .rich-editor ol { padding-left: 1.6em; margin: .4em 0 .4em 2em; width: calc(100% - 2em); text-indent: 0; }
     /* 下划线统一 1px 并下移 2px；关掉 text-decoration-skip-ink，
        避免 g / y / p 这类下伸笔画处断线，编辑态与展示态同一套。 */
     .rich-editor u, .card-answer .answer-inner u,
