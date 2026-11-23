@@ -323,8 +323,10 @@
         box-shadow: 0 2px 8px var(--mc-card-32);
         border: none; cursor: zoom-in;
     }
-    /* 裸挂图片由容器 text-indent 对齐，多图并排时行首一张缩进、其余紧随。 */
-    .card-answer .answer-inner > img { max-width: 100%; }
+    /* 裸挂在答案区根下的图片自成一行，吃不到段落的 text-indent，
+       所以行首这张单独补左边距；同一行后续的图片不再重复缩进，避免图间出现大空档。 */
+    .card-answer .answer-inner > img { max-width: calc(100% - 2em); margin-left: 2em; }
+    .card-answer .answer-inner > img + img { max-width: 100%; margin-left: 2px; }
     /* 块级内容（列表/引用/表格/代码/公式）整体左移到正文首行位置，宽度相应收窄防溢出；
        text-indent 归零，避免继承容器的首行缩进让块内文字参差不齐。 */
     .card-answer .answer-inner ul,
@@ -432,6 +434,8 @@
     .card-answer.flush .answer-inner p,
     .card-answer.flush .answer-inner p.hang { text-indent: 0; }
     .card-answer.flush .answer-inner p:has(.katex-display) { margin-left: 0; }
+    /* 顶格态：裸挂图片回到行首，左边距还原成图片自身的 2px */
+    .card-answer.flush .answer-inner > img { margin-left: 2px; max-width: 100%; }
     .card-answer.flush .answer-inner ul,
     .card-answer.flush .answer-inner ol { margin: .4em 0; width: 100%; }
     .card-answer.flush .answer-inner blockquote { margin: .5em 0; width: 100%; }
@@ -442,6 +446,7 @@
     .rich-editor.flush p,
     .rich-editor.flush p.hang { text-indent: 0; }
     .rich-editor.flush p:has(.katex-display) { margin-left: 0; }
+    .rich-editor.flush > img { margin-left: 2px; max-width: 100%; }
     .rich-editor.flush table { margin: 8px 0; width: 100%; }
     .rich-editor.flush blockquote { margin: .5em 0; width: 100%; }
     .rich-editor.flush ul, .rich-editor.flush ol { margin: .4em 0; width: 100%; }
@@ -601,7 +606,7 @@
     .ch-new-input .btn-ch-add:disabled { background: var(--mc-dialog-24); cursor: default; box-shadow: none; }
 
     .ch-item {
-        display: flex; align-items: center; gap: 8px;
+        display: flex; align-items: center; gap: 6px;
         padding: 6px 8px; border-radius: 10px; cursor: pointer;
         border: 1.5px solid transparent; background: var(--mc-white);
     }
@@ -629,10 +634,15 @@
         flex: 1; min-width: 0; font-size: 13.5px; color: var(--mc-label-fg); word-break: break-word;
     }
     .ch-item .ch-item-name.empty-name { color: var(--mc-muted-fg); }
-    .ch-item .ch-item-count { font-size: 12px; color: var(--mc-muted-fg); flex-shrink: 0; }
+    /* 张数按两位数字预留宽度并居中，位数变化不会挪动前面的状态胶囊，
+       两侧留白也保持对称 */
+    .ch-item .ch-item-count {
+        font-size: 12px; color: var(--mc-muted-fg); flex-shrink: 0;
+        min-width: 32px; text-align: center;
+    }
     .ch-item .ch-mini {
         background: transparent; border: none; cursor: pointer; font-size: 13px;
-        padding: 2px 5px; border-radius: 8px; flex-shrink: 0; font-family: inherit;
+        padding: 2px 4px; border-radius: 8px; flex-shrink: 0; font-family: inherit;
         color: var(--mc-dialog-30); transition: background .12s;
     }
     @media (hover: hover) and (pointer: fine) {
@@ -723,7 +733,10 @@
     .rich-editor:empty::before {
         content: attr(data-placeholder);
         color: var(--mc-muted-fg); font-style: italic; pointer-events: none; white-space: pre-line;
+        /* 占位提示可能有好几行，整块右移而不是只缩第一行，几行左边缘保持一致 */
+        display: block; padding-left: 2em; text-indent: 0;
     }
+    .rich-editor.flush:empty::before { padding-left: 0; }
     .rich-editor img {
         /* 图片只限宽、不限高，高度按宽高比自动走，竖图不会被压扁 */
         max-width: 100%; height: auto; border-radius: 10px; margin: 6px 2px;
@@ -738,7 +751,9 @@
         cursor: pointer;
     }
     /* 裸挂图片不逐张补左边距，多图并排时首张由容器 text-indent 对齐，其余紧随。 */
-    .rich-editor > img { max-width: 100%; }
+    /* 编辑区裸挂图片：行首一张补左边距与正文首行对齐，同行后续图片不再重复缩进 */
+    .rich-editor > img { max-width: calc(100% - 2em); margin-left: 2em; }
+    .rich-editor > img + img { max-width: 100%; margin-left: 2px; }
     .rich-editor img.selected {
         box-shadow: 0 0 0 3px var(--mc-editor-04);
     }
