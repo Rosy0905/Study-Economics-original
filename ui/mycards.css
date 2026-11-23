@@ -293,19 +293,31 @@
     .card-answer .answer-inner {
         background: var(--mc-card-30); padding: 18px 22px; border-radius: 14px;
         font-size: 13.8px; line-height: 1.75; color: var(--mc-card-31); word-break: break-word;
+        /* 容器首行缩进：裸挂在根下的图片靠它对齐正文首行；
+           p 自带同名规则会覆盖继承值，段落不受影响。 */
+        text-indent: 2em;
     }
     .card-answer .answer-inner p {
         margin: 0 0 0.2em 0; padding: 0;
         line-height: 1.75; white-space: pre-wrap; word-break: break-word;
+        /* 首行缩进按正文字号算，段距 0.2em。 */
+        text-indent: 2em;
     }
     .card-answer .answer-inner p:last-child { margin-bottom: 0; }
+    /* 行首全角括号自带左留白，减 0.63em 使序号与正文首行齐平。 */
+    .card-answer .answer-inner p.hang { text-indent: calc(2em - 0.63em); }
+    /* 独占一行的块级公式不缩进。 */
+    .card-answer .answer-inner p:has(.katex-display) { text-indent: 0; }
     .card-answer .answer-inner img {
-        /* 答案区图片只限宽不限高，宽高比保持不变；放大镜光标提示可点开大图。
-           图片不加边框与底色，收藏态米色答案底上不会出现浅绿描边。 */
-        max-width: 100%; height: auto; border-radius: 10px; margin: 6px 0;
-        display: block; box-shadow: 0 2px 8px var(--mc-card-32);
+        /* 行内块排版：多张图可并排，图片后接文字不留空行。
+           段内图片随段落 text-indent 对齐首行；只限宽不限高，宽高比不变。 */
+        max-width: 100%; height: auto; border-radius: 10px; margin: 6px 2px;
+        display: inline-block; vertical-align: bottom;
+        box-shadow: 0 2px 8px var(--mc-card-32);
         border: none; cursor: zoom-in;
     }
+    /* 裸挂图片由容器 text-indent 对齐，多图并排时行首一张缩进、其余紧随。 */
+    .card-answer .answer-inner > img { max-width: 100%; }
     .card-answer .answer-inner ul,
     .card-answer .answer-inner ol { padding-left: 1.6em; margin: .4em 0; }
     .card-answer .answer-inner blockquote {
@@ -639,8 +651,15 @@
         resize: vertical;
         outline: none; transition: border 0.2s, box-shadow 0.2s;
         word-break: break-word; position: relative;
+        /* 容器首行缩进：裸挂在编辑器根下的图片靠它对齐正文首行。
+           p 自带同名规则会覆盖继承值，段落不受影响。 */
+        text-indent: 2em;
     }
     .rich-editor:focus { border-color: var(--mc-focus-border); box-shadow: 0 0 0 3px var(--mc-editor-02); }
+    /* 编辑态首行缩进与展开态一致。 */
+    .rich-editor p { text-indent: 2em; }
+    .rich-editor p.hang { text-indent: calc(2em - 0.63em); }
+    .rich-editor p:has(.katex-display) { text-indent: 0; }
     .rich-editor:empty::before {
         content: attr(data-placeholder);
         color: var(--mc-muted-fg); font-style: italic; pointer-events: none; white-space: pre-line;
@@ -658,6 +677,8 @@
         transition: box-shadow 0.18s ease;
         cursor: pointer;
     }
+    /* 裸挂图片不逐张补左边距，多图并排时首张由容器 text-indent 对齐，其余紧随。 */
+    .rich-editor > img { max-width: 100%; }
     .rich-editor img.selected {
         box-shadow: 0 0 0 3px var(--mc-editor-04);
     }

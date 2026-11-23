@@ -237,6 +237,25 @@
     window.__renderMath = function () { renderMathIn(grid); };
 
     /* ============================================================
+       首行缩进的行首对齐
+       行首是全角括号（（1）、【…）时字形自带左留白，挂上 hang 让 CSS
+       把首行缩进减 0.63em，字才与正文齐平。只加/去 class，不动 DOM 结构，
+       编辑态里不影响光标位置。
+       ============================================================ */
+    var HANG_LEAD = /^[（(【［〔〈《「『]/;
+    function hangOf(text) {
+        return HANG_LEAD.test(String(text == null ? '' : text).replace(/^\*\*/, '').trim());
+    }
+    /* 块级容器里所有 p 重算 hang：取段落纯文本的首字符判断。
+       图片、公式独立成段时文本为空，自然不挂。 */
+    function refreshHang(root) {
+        if (!root) return;
+        root.querySelectorAll('p').forEach(function (p) {
+            p.classList.toggle('hang', hangOf(p.textContent));
+        });
+    }
+
+    /* ============================================================
        章节相关（章节归属于分类，微观建的章节不出现在宏观里）
        ============================================================ */
     /* 下拉框的 option value：用 JSON 存 [分类, 章节名]。
@@ -762,6 +781,7 @@
         });
         grid.innerHTML = html;
         KB.ImageStore.hydrate(grid, 'img');
+        refreshHang(grid);
         renderMathIn(grid);
     }
 
@@ -1153,6 +1173,7 @@
         questionInput.style.height = '';
         answerEditor.style.height = '';
         KB.ImageStore.hydrate(answerEditor, 'img');
+        refreshHang(answerEditor);
         editorOverlay.classList.add('show');
         lockBody(true);
         /* 新建时直接聚焦题目输入框，不给分类下拉自动对焦 */
@@ -1943,6 +1964,14 @@
     answerEditor.addEventListener('input', function () {
         var h = this.innerHTML.trim();
         if (h === '<br>' || h === '<div><br></div>') this.innerHTML = '';
+        /* 中文输入组字中不刷 class：此时的 DOM 是临时的，动它会让候选字上屏错位。
+           组字结束后 input 会再触发一次，那次再补上。 */
+        if (!this.__composing) refreshHang(this);
+    });
+    answerEditor.addEventListener('compositionstart', function () { this.__composing = true; });
+    answerEditor.addEventListener('compositionend', function () {
+        this.__composing = false;
+        refreshHang(this);
     });
 
     /* 图片尺寸条：与全站富文本共用 KB.ImgCtl 的双模式状态机。
