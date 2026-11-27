@@ -32,6 +32,9 @@
   var chip = 'all';
   var marks = {};
   var revealed = {};
+  /* 全站搜索落地时临时放行的卡片 id。只活在内存里，不进 KB.Store；
+     退出搜索由落点脚本调 unreveal 撤销，档位与标记本身一律不动。 */
+  var sjRevealId = null;
   /* 进抽查前那份可见 id：抽查时栅格只剩一张，统计要沿用这份才不会缩成 1 */
   var statsIds = null;
 
@@ -57,6 +60,7 @@
 
   /* 档位筛选：没开启自测时一律放行，页面逻辑不用分叉 */
   function pass(id) {
+    if (sjRevealId && id === sjRevealId) return true;
     if (!on || chip === 'all') return true;
     var m = marks[id];
     if (chip === 'weak') return m === 'meh' || m === 'no';
@@ -349,11 +353,27 @@
     refresh();
   }
 
+  /* ---- 全站搜索落点的临时放行 ----
+     只改这一张卡的隐藏态，不动 on/chip/marks，也不写 KB.Store。
+     reveal 先记 id 再重算隐藏；unreveal 撤销后同样重算，卡片回到原档位。 */
+  function reveal(id) {
+    sjRevealId = id || null;
+    syncHidden();
+  }
+
+  function unreveal() {
+    if (!sjRevealId) return;
+    sjRevealId = null;
+    syncHidden();
+  }
+
   KB.SelfTest = {
     init: init,
     enabled: enabled,
     pass: pass,
     refresh: refresh,
+    reveal: reveal,
+    unreveal: unreveal,
     countLearned: countLearned
   };
 })(window);

@@ -167,6 +167,10 @@
       lastHit: ''
     };
 
+    /* 全站搜索落点临时放行的题号。只活在内存里，收藏、档位、标记一律不动；
+       exitSearch 调 unreveal 撤销，passItem 与渲染都认这一条放行。 */
+    var sjRevealId = '';
+
     (function loadState() {
       st.selftest = KB.Store.get(moduleId, 'selftest-on', false) === true;
       st.favOnly = KB.Store.get(moduleId, 'fav-only', false) === true;
@@ -220,12 +224,21 @@
     /* 一条题过不过当前筛选：收藏、档位、关键词三层叠加。
        熟悉度关着时档位不参与——看不到标记，就不该被标记筛掉。 */
     function passItem(it) {
+      if (sjRevealId && it.id === sjRevealId) return true;
       if (st.favOnly && !st.favs[it.id]) return false;
       if (!st.selftest || st.facet === 'all') return true;
       var m = st.marks[it.id];
       if (st.facet === 'weak') return m === 'meh' || m === 'no';
       if (st.facet === 'none') return !m;
       return m === st.facet;
+    }
+
+    /* 关键词过滤也认那条会话内放行：落点临时放出目标题时，
+       搜索词是借来的临时词，不该把刚放出的题再筛掉。 */
+    function passKeyword(it, M) {
+      if (!M) return true;
+      if (sjRevealId && it.id === sjRevealId) return true;
+      return KB.AnswerSearch.hit(KB.AnswerSearch.hay(it), M);
     }
 
     /* 档位计数的分母：只受收藏影响，档位本身不参与——
@@ -298,7 +311,7 @@
         (p.parts || []).forEach(function (part) {
           (part.items || []).forEach(function (it) {
             if (!passItem(it)) return;
-            if (M && !KB.AnswerSearch.hit(KB.AnswerSearch.hay(it), M)) return;
+            if (!passKeyword(it, M)) return;
             hits.push({ type: part.type, it: it });
           });
         });
@@ -684,7 +697,7 @@
       (paper.parts || []).forEach(function (part, i) {
         var items = (part.items || []).filter(function (it) {
           if (!passItem(it)) return false;
-          if (M && !KB.AnswerSearch.hit(KB.AnswerSearch.hay(it), M)) return false;
+          if (!passKeyword(it, M)) return false;
           return true;
         });
         if (items.length) shownParts.push({ type: part.type, items: items, idx: i, note: part.note });
@@ -1107,6 +1120,33 @@
       /* 位置定下来再画第一次高亮：面板不会先亮第 1 题、再跳到真正在读的那题 */
       if (nav) nav.release();
     });
+
+    /* ---- 全站搜索落点临时放行 ----
+       exists 只读数据源，不受当前收藏／档位／关键词影响，用来区分
+       「目标被挡住」和「目标真被删改」。reveal 只放行这一题并重绘定位；
+       unreveal 撤销后重绘，档位、收藏、标记一律没动过。 */
+    function exists(id) {
+      return !!findItem(id);
+    }
+
+    function reveal(id) {
+      if (!findItem(id)) return false;
+      sjRevealId = id;
+      st.listMode = 'paper';
+      render();
+      return !!document.getElementById(id);
+    }
+
+    function unreveal() {
+      if (!sjRevealId) return;
+      sjRevealId = '';
+      render();
+    }
+
+    /* 挂到命名空间上给全站搜索落点用：exists 判存在、reveal 临时放出、unreveal 还原 */
+    KB.Answers.exists = exists;
+    KB.Answers.reveal = reveal;
+    KB.Answers.unreveal = unreveal;
 
     return {
       render: render,

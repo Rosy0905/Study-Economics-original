@@ -669,10 +669,48 @@
     locateFromHash();
     global.addEventListener('hashchange', locateFromHash);
 
+    /* 全站搜索落点用：find 只读原始数据源，不受当前筛选影响 */
+    function findCard(id) {
+      return !!cardOf(id);
+    }
+
+    /* 临时放开一切挡住目标卡的条件：下拉回默认、关键词清空、自测档位放行。
+       只改内存里的 values/keyword，不写 KB.Store；落点退出时由
+       restoreFilters 与 FilterMemory.restore 把下拉和词原样还原。 */
+    function revealCard(id) {
+      if (!cardOf(id)) return false;
+      var bar = document.getElementById('filterBar');
+      if (bar) {
+        var sels = bar.querySelectorAll('select');
+        for (var i = 0; i < sels.length; i++) {
+          var s = sels[i];
+          if (s.disabled) continue;
+          var d = s.options.length ? s.options[0].value : '';
+          if (s.value !== d) {
+            s.value = d;
+            s.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      }
+      keyword = '';
+      if (searchEl) searchEl.value = '';
+      toggleSearchClear();
+      if (KB.SelfTest && KB.SelfTest.reveal) KB.SelfTest.reveal(id);
+      render();
+      return !!grid.querySelector('.card-item[data-id="' + id + '"]');
+    }
+
+    function unrevealCard() {
+      if (KB.SelfTest && KB.SelfTest.unreveal) KB.SelfTest.unreveal();
+    }
+
     instance = {
       render: render,
       setPreset: applyPreset,
       cards: cards,
+      find: findCard,
+      reveal: revealCard,
+      unreveal: unrevealCard,
       randomPick: randomPick,
       enterSingle: function (list) { if (single) single.enter(list); },
       exitSingle: function (silent) { if (single) single.exit(silent); }
@@ -683,6 +721,20 @@
 
   KB.Page = {
     mount: mount,
-    setPreset: function (p) { if (instance) instance.setPreset(p); }
+    setPreset: function (p) { if (instance) instance.setPreset(p); },
+    /* 全站搜索落点：exists 只读数据源，用来区分目标被挡住还是真被删改；
+       reveal 临时放开档位与自测隐藏并重绘，定位由落点脚本完成；unreveal 撤销放行。
+       两次都不碰 KB.Store，筛选记忆由落点脚本的 suspend 统一挡住。 */
+    exists: function (id) {
+      if (!instance) return false;
+      return !!instance.find(id);
+    },
+    reveal: function (id) {
+      if (!instance || !instance.find(id)) return false;
+      return instance.reveal(id);
+    },
+    unreveal: function () {
+      if (instance) instance.unreveal();
+    }
   };
 })(window);

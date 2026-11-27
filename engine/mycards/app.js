@@ -3005,9 +3005,27 @@
 
 
     /* 对外门面：生成器、AI 存卡、回归脚本都从这里进，不直接摸闭包变量 */
+    /* 全站搜索落点：exists 只读卡片源，reveal 清掉筛选把目标放出并定位。
+       两者都不写 KB.Store；退出搜索由落点脚本负责把筛选原样还原。 */
+    function sjExists(id) {
+        return cards.some(function (c) { return String(c.id) === String(id); });
+    }
+
+    function sjReveal(id) {
+        if (!sjExists(id)) return false;
+        filterChapter.value = 'all';
+        filterFav.value = 'all';
+        filterSearch.value = '';
+        toggleMcClear();
+        render();
+        return !!grid.querySelector('.card-item[data-id="' + id + '"]');
+    }
+
     KB.MyCards = {
         mount: mount,
         render: render,
+        exists: sjExists,
+        reveal: sjReveal,
         setSortMode: setSortMode,
         applyDrop: applyCardDrop,
         canDragNow: canDragNow,

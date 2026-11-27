@@ -162,6 +162,11 @@
             if (FM.suspend) { try { FM.suspend(); } catch (e) {} }
             clearTimeout(fmTimer);
         }
+        /* 临时放行的开关与抑制计数，先声明再挂监听 */
+        var revealed = false;
+        var suppress = 0;
+        /* 落点结束后，用户自己动筛选就撤掉临时放行，见 armUserFilterWatch */
+        armUserFilterWatch();
         function fmResumeSoon(ms) {
             if (!FM) return;
             clearTimeout(fmTimer);
@@ -285,6 +290,10 @@
                 window.history.replaceState(null, '', window.location.pathname + (s ? '?' + s : ''));
             } catch (e) {}
 
+            /* 先撤销落点时的临时放行：这一步可能触发页面重绘，
+               必须排在还原筛选之前，且整段仍在 suspend 里，不会写进记忆 */
+            exitReveal();
+
             if (ansMode) {
                 /* 答案册：点它自己的「清空搜索」。档位（只看不会的）是它跨会话记的，不动 */
                 var btn = document.getElementById('searchReset');
@@ -321,7 +330,10 @@
                不写回的话，绕道返回再点一次进来，筛选就真的被改掉了 */
             a.addEventListener('click', function () {
                 fmPause();
+                exitReveal();
                 if (FM && FM.restore) { try { FM.restore(fmSnap); } catch (e) {} }
+                var t = document.querySelector('.sj-tip');
+                if (t && t.parentNode) t.parentNode.removeChild(t);
             });
             bar.appendChild(a);
             if (ansMode) {
@@ -403,6 +415,11 @@
            pagehide 已覆盖关页、刷新与切后台，不再挂离开确认，页面才能进往返缓存 */
         window.addEventListener('pagehide', saveScroll);
 
+        /* 落点失败分两种，文案分开：目标被当前筛选挡住而临时放出，
+           与数据里确实找不到（删了或改了），不要混成一句。 */
+        var TIP_BLOCKED = '这张卡被当前筛选挡住，现在临时放出~';
+        var TIP_MISSING = '这张卡没有找到哦，可能被修改或删除了';
+
         function tip(msg) {
             /* 同时只留一条：连着触发两次不会叠成两坨 */
             var old = document.querySelector('.sj-tip');
@@ -468,16 +485,126 @@
             }, 2800);
         }
 
+        /* ---------- 被挡住的落点：判存在 → 临时放出 → 定位 ----------
+           页面只有「当前筛选后」的 DOM，被挡的卡根本不在里面，所以先问页面
+           原始数据源有没有这 id：有就是被挡住，没有才是真的删改了。 */
+        function probeExists() {
+            if (ansMode) {
+                return !!(window.KB && KB.Answers && KB.Answers.exists &&
+                          KB.Answers.exists(cid));
+            }
+            if (window.KB && KB.Page && KB.Page.exists) return !!KB.Page.exists(cid);
+            /* 我的卡片页不加载 page.js，走它自己的门面 */
+            if (window.KB && KB.MyCards && KB.MyCards.exists) return !!KB.MyCards.exists(cid);
+            return false;
+        }
+
+        /* 把目标临时放出后落到它身上。各页 reveal 只改内存态、不写存储，
+           退出搜索时由 exitSearch 统一撤销，筛选记忆也随快照还原。
+           放出后卡片才进 DOM，定位与闪框仍走 gotoCard 那套。 */
+        function revealAndLocate(fail) {
+            var ok = false;
+            fmPause();   /* 放行引起的重绘不许写进筛选记忆 */
+            if (ansMode) {
+                /* 答案册 reveal 已切到单卷并渲染出目标题，命中列表此时不在 DOM，
+                   不能再走 gotoCard 找 .sr-item；直接对题目节点定位闪框。 */
+                ok = !!(window.KB && KB.Answers && KB.Answers.reveal &&
+                        suppressedCall(function () { return KB.Answers.reveal(cid); }));
+                if (!ok) { fail(); return; }
+                revealed = true;
+                var el = null;
+                try { el = document.getElementById(cid); } catch (e) {}
+                if (!el) { fail(); return; }
+                try { el.scrollIntoView({ block: 'start', behavior: 'auto' }); } catch (e) {}
+                setTimeout(function () {
+                    try { el.scrollIntoView({ block: 'start', behavior: 'auto' }); } catch (e) {}
+                }, 120);
+                flashPaperItem(cid);
+                unveil();
+                tip(TIP_BLOCKED);
+                return;
+            }
+            var pg = (window.KB && KB.Page && KB.Page.reveal) ? KB.Page
+                   : (window.KB && KB.MyCards && KB.MyCards.reveal) ? KB.MyCards : null;
+            ok = !!(pg && suppressedCall(function () { return pg.reveal(cid); }));
+            if (!ok) { fail(); return; }
+            revealed = true;
+            gotoCard(0, fail, function () {
+                tip(TIP_BLOCKED);
+            });
+        }
+
+        function exitReveal() {
+            revealed = false;
+            if (ansMode) {
+                if (window.KB && KB.Answers && KB.Answers.unreveal) {
+                    try { KB.Answers.unreveal(); } catch (e) {}
+                }
+            } else if (window.KB && KB.Page && KB.Page.unreveal) {
+                try { KB.Page.unreveal(); } catch (e) {}
+            } else if (window.KB && KB.MyCards && KB.MyCards.unreveal) {
+                try { KB.MyCards.unreveal(); } catch (e) {}
+            }
+            var t = document.querySelector('.sj-tip');
+            if (t && t.parentNode) t.parentNode.removeChild(t);
+        }
+
+        /* 落点把卡放出来后，用户在页面上自己动筛选，那张卡就该回到新筛选的结果里。
+           否则「选了只看不会的，放出的那张会了的卡还杵在那儿」就是错位。
+           脚本自己填词、放下拉也会发同名事件，用 suppressed 把那些挡掉。 */
+        function suppressedCall(fn) {
+            suppress++;
+            var out;
+            try { out = fn(); } finally {
+                setTimeout(function () { suppress = Math.max(0, suppress - 1); }, 0);
+            }
+            return out;
+        }
+        function onUserFilterChange() {
+            if (!revealed || suppress > 0) return;
+            revealed = false;
+            exitReveal();
+        }
+        function armUserFilterWatch() {
+            var bar = document.getElementById('filterBar');
+            if (bar) {
+                bar.addEventListener('change', onUserFilterChange, true);
+                bar.addEventListener('input', onUserFilterChange, true);
+            }
+            var inp = getInp();
+            if (inp) inp.addEventListener('input', onUserFilterChange);
+            /* 各页的重置按钮直接改值再重绘，不发 change 事件，单独认一下；
+               答案册的收藏开关、档位条、范围链接同理不走筛选栏 */
+            document.addEventListener('click', function (e) {
+                var t = e.target;
+                if (!t || !t.closest) return;
+                if (t.closest('#btnReset') || t.closest('#clearFilterBtn') ||
+                    t.closest('#searchReset') || t.closest('#mcSearchClear') ||
+                    t.closest('#favOnly') || t.closest('#stBar') ||
+                    t.closest('.st-bar') || t.closest('.st-chip') ||
+                    t.closest('.chip2') || t.closest('#scopeAll') ||
+                    t.closest('#stToggle')) onUserFilterChange();
+            }, true);
+        }
+
         /* ---------- 定位卡片 ----------
            n：重试次数（卡片渲染有延迟）
            onFail：重试完仍找不到时的回调，由调用方决定下一步降级 */
-        function gotoCard(n, onFail) {
+        function gotoCard(n, onFail, onFound) {
             var el = null;
             if (cid) {
                 var sel = ansMode
                     ? '.sr-item[data-qid="' + cssEsc(cid) + '"]'
                     : '.card-item[data-id="' + cssEsc(cid) + '"]';
                 try { el = document.querySelector(sel); } catch (e) {}
+            }
+            /* 自测档位靠 display:none 藏卡，DOM 还在。不可见的不算找到，
+               否则会停在隐藏卡上空闪一下，永远走不到临时放出那一步。 */
+            if (el && !ansMode) {
+                try {
+                    if (el.classList.contains('st-hide') ||
+                        window.getComputedStyle(el).display === 'none') el = null;
+                } catch (e) {}
             }
             if (el) {
                 if (ansMode) {
@@ -502,10 +629,11 @@
                         if (++wait > 14) { unveil(); return; }
                         setTimeout(paperReady, 50);
                     })();
-                    setTimeout(saveScroll, 400);
-                    return true;
-                }
-                el.scrollIntoView({ block: 'start', behavior: 'auto' });
+                setTimeout(saveScroll, 400);
+                if (onFound) onFound();
+                return true;
+            }
+            el.scrollIntoView({ block: 'start', behavior: 'auto' });
                 if (window.requestAnimationFrame) requestAnimationFrame(function () {
                     el.scrollIntoView({ block: 'start', behavior: 'auto' });
                 });
@@ -517,9 +645,13 @@
                 setTimeout(function () { el.classList.remove('sj-flash'); }, 3000);
                 setTimeout(saveScroll, 120);   /* 落点定下来就记一次，免得刷新时读到上一次的旧位置 */
                 setTimeout(unveil, 90);      /* 滚完再揭，揭开的瞬间位置已经对了 */
+                if (onFound) onFound();
                 return true;
             }
-            if (n < 10) { setTimeout(function () { gotoCard(n + 1, onFail); }, 120); return false; }
+            if (n < 10) {
+                setTimeout(function () { gotoCard(n + 1, onFail, onFound); }, 120);
+                return false;
+            }
             if (onFail) onFail();
             return false;
         }
@@ -544,12 +676,22 @@
             if (tries.length < 3 && tries.indexOf(t) === -1) tries.push(t);
         });
 
-        function lostTip() {
+        /* 降级到底仍看不到目标：先看数据源里有没有。
+           有 → 只是被当前筛选挡住，临时放出并落到它身上；
+           没有 → 才是真的删了或改了。 */
+        function lastResort() {
+            if (probeExists()) {
+                revealAndLocate(function () { reallyLost(); });
+                return;
+            }
+            reallyLost();
+        }
+
+        function reallyLost() {
             /* 答案册还有一条后路：直接改 hash，它自己的 locateFromHash 会接住 */
             if (ansMode && cid) { try { window.location.hash = cid; } catch (e) {} }
             unveil();
-            /* 走到这步之前搜索词已清空、各下拉已放回默认，还不出现就是真不在了 */
-            tip('没找到这张卡片，内容可能已经删了或改了');
+            tip(TIP_MISSING);
         }
 
         /* 最后一搏：把各下拉临时放回默认再定位。
@@ -570,11 +712,14 @@
                     }
                 }
             }
-            if (!lifted) { lostTip(); return; }
+            if (!lifted) { lastResort(); return; }
             /* 程序放下的档位不写筛选记忆，等页面自己的防抖过去再恢复记录 */
             fmPause();
             fmResumeSoon(700);
-            gotoCard(0, lostTip);
+            gotoCard(0, lastResort, function () {
+                revealed = true;
+                tip(TIP_BLOCKED);
+            });
         }
 
         function clearAndLocate() {
@@ -587,7 +732,14 @@
         }
 
         function attempt(i) {
-            if (i >= tries.length) { clearAndLocate(); return; }
+            if (i >= tries.length) {
+                /* 目标在数据源里却一直没搜出来，是被筛选挡住了：
+                   直接进放出流程，省掉「清词再找」「放下拉再找」两轮白等。
+                   判据不存在（页面没提供 exists）时才退回逐档降级。 */
+                if (probeExists()) { lastResort(); return; }
+                clearAndLocate();
+                return;
+            }
             fill(tries[i], function (ok) {
                 if (!ok) { attempt(i + 1); return; }
                 gotoCard(0, function () { attempt(i + 1); });
@@ -595,17 +747,48 @@
         }
 
         /* 刷新分支：把筛选重放一遍，然后回到翻到的位置，不弹回卡片。
-           还得挑一个子页真能搜出东西的词 —— 多词整串往往一张不剩，列表空了就没位置可回。 */
+           还得挑一个子页真能搜出东西的词 —— 多词整串往往一张不剩，列表空了就没位置可回。
+           刷新前若靠临时放行才看到这张卡，那份放行是内存态，刷新即失效；
+           这里补一次放出，否则一按 F5 卡就退回隐藏态、页面还留着 ?kw=&cid=。
+           补放出只在目标确实被挡时做，放完后按原逻辑回到翻到的位置。 */
+        function reloadReveal(done) {
+            if (!cid || !probeExists()) { done(); return; }
+            var el = null;
+            if (ansMode) {
+                el = document.getElementById(cid);
+            } else {
+                try { el = document.querySelector('.card-item[data-id="' + cssEsc(cid) + '"]'); } catch (e) {}
+                if (el && (el.classList.contains('st-hide') ||
+                           window.getComputedStyle(el).display === 'none')) el = null;
+            }
+            if (el) { done(); return; }   /* 没被挡住，刷新本就能看见，不动 */
+            fmPause();
+            var ok = false;
+            if (ansMode) {
+                ok = !!(window.KB && KB.Answers && KB.Answers.reveal &&
+                        suppressedCall(function () { return KB.Answers.reveal(cid); }));
+            } else {
+                ok = !!(window.KB && KB.Page && KB.Page.reveal &&
+                        suppressedCall(function () { return KB.Page.reveal(cid); }));
+            }
+            if (ok) { revealed = true; tip(TIP_BLOCKED); }
+            done();
+        }
+
         function attemptReload(i) {
             if (i >= tries.length) {
                 var inp0 = getInp();
-                if (inp0 && inp0.value) { fill('', function () { restoreScroll(); unveil(); }); return; }
-                restoreScroll(); unveil(); return;
+                if (inp0 && inp0.value) {
+                    fill('', function () { reloadReveal(function () { restoreScroll(); unveil(); }); });
+                    return;
+                }
+                reloadReveal(function () { restoreScroll(); unveil(); });
+                return;
             }
             fill(tries[i], function (ok) {
                 if (!ok) { attemptReload(i + 1); return; }
                 var n = document.querySelectorAll(ansMode ? '.sr-item' : '.card-item').length;
-                if (n > 0) { restoreScroll(); unveil(); }
+                if (n > 0) { reloadReveal(function () { restoreScroll(); unveil(); }); }
                 else attemptReload(i + 1);
             });
         }
@@ -619,7 +802,7 @@
             } else if (kw) {
                 attempt(0);
             } else {
-                gotoCard(0, lostTip);
+                gotoCard(0, lastResort);
             }
         }
     }
