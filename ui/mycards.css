@@ -300,6 +300,8 @@
     .card-answer .answer-inner {
         background: var(--mc-card-30); padding: 18px 22px; border-radius: 14px;
         font-size: 13.8px; line-height: 1.75; color: var(--mc-card-31); word-break: break-word;
+        /* 答案正文可拖选复制：拖拽把手已移到卡片头部，这里显式放行文字选择 */
+        -webkit-user-select: text; user-select: text;
         /* 容器首行缩进：裸挂在根下的图片靠它对齐正文首行；
            p 自带同名规则会覆盖继承值，段落不受影响。 */
         text-indent: 2em;
@@ -1222,9 +1224,9 @@
     }
     .orb-sort-btn.active .orb-flag { opacity: 1; transform: scale(1); }
 
-    /* 拖拽态：仅同章节内落位，跨章节不给插入标记 */
-    .card-grid.sortable .card-item[draggable="true"] { cursor: grab; }
-    .card-grid.sortable .card-item[draggable="true"]:active { cursor: grabbing; }
+    /* 拖拽态：把手只在头部，正文与答案区保持可选中复制；仅同章节内落位 */
+    .card-grid.sortable .card-header[draggable="true"] { cursor: grab; }
+    .card-grid.sortable .card-header[draggable="true"]:active { cursor: grabbing; }
     .card-item.dragging { opacity: .45; }
     .card-item.drop-before { box-shadow: 0 -3px 0 0 var(--mc-sort-drop); }
     .card-item.drop-after  { box-shadow: 0  3px 0 0 var(--mc-sort-drop); }

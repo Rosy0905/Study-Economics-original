@@ -756,11 +756,12 @@
         var isOpen = openIds.has(c.id);
 
         var dragOn = M.orderMode() === 'manual' && canDragNow();
+        /* 拖拽只挂在头部：整张卡可拖会把答案区一起卷进拖影，正文没法拖选复制。
+           头部仍可拖排序，dragstart 里的 closest('.card-item') 照常拿到卡片。 */
         return '' +
         '<div class="card-item' + (c.fav ? ' favorited' : '') + '" data-id="' + safeText(c.id) +
-            '" data-group="' + safeText(M.groupKeyOf(c)) + '"' +
-            (dragOn ? ' draggable="true"' : '') + '>' +
-            '<div class="card-header">' +
+            '" data-group="' + safeText(M.groupKeyOf(c)) + '">' +
+            '<div class="card-header"' + (dragOn ? ' draggable="true"' : '') + '>' +
                 '<div class="label">' + subjectHtml + ' ' + qidHtml + ' ' + hasImgHtml + '</div>' +
                 '<div class="card-actions">' +
                     '<button class="btn-fav' + (c.fav ? ' active' : '') + '" data-id="' + safeText(c.id) + '" title="' + (c.fav ? '取消收藏' : '收藏') + '">' +
